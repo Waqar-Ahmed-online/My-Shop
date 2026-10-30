@@ -15,7 +15,7 @@ const FanModelSchema = new Schema(
     oldPrice: { type: Number, default: null },
     image: { type: String, required: true },
     publicId: { type: String, required: true },
-        sizes: { type: [String], default: [] },
+    sizes: { type: [String], default: [] },
     inStock: { type: Boolean, default: true },
     colors: { type: [ColorSchema], default: [] },
   },
@@ -27,4 +27,5 @@ if (process.env.NODE_ENV !== "production" && models.FanModel) {
   delete models.FanModel;
 }
 
-export default model("FanModel", FanModelSchema);
+// production me pehle se bana hua model dobara use karo
+export default models.FanModel || model("FanModel", FanModelSchema);

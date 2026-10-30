@@ -1,0 +1,1 @@
+export const rs = (n: number) => `Rs. ${n.toLocaleString("en-PK")}`;

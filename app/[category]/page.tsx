@@ -26,7 +26,7 @@ async function Content({ params }: { params: Promise<{ category: string }> }) {
   const models = await getFanModels(category);
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-[1400px]">
       <h1 className="text-center font-display text-4xl font-semibold uppercase tracking-wide text-neutral-900 sm:text-5xl">
         {card.label}
       </h1>
@@ -36,7 +36,7 @@ async function Content({ params }: { params: Promise<{ category: string }> }) {
           Is category me abhi koi model nahi hai.
         </p>
       ) : (
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mx-auto mt-10 grid max-w-md grid-cols-1 gap-6 lg:max-w-none lg:grid-cols-3 lg:gap-8">
           {models.map((m) => (
             <Link
               key={m.id}
@@ -50,7 +50,7 @@ async function Content({ params }: { params: Promise<{ category: string }> }) {
                   alt={m.name}
                   fill
                   quality={90}
-                  sizes="(min-width: 768px) 33vw, 100vw"
+                  sizes="(min-width: 1024px) 33vw, 100vw"
                   className="object-contain p-4 transition duration-700 group-hover:scale-105"
                 />
               </div>

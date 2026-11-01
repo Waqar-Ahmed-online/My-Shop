@@ -1,23 +1,46 @@
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import type { Slide } from "@/types";
 
 type Props = { slide: Slide; active: boolean; priority: boolean };
 
 export default function HeroSlide({ slide, active, priority }: Props) {
+  const common = {
+    alt: slide.title,
+    fill: true,
+    quality: 90,
+    sizes: "100vw",
+    priority,
+    className: "object-cover object-center",
+  } as const;
+
+  let background: React.ReactNode;
+
+  if (slide.mobileImage) {
+    // 768px se upar laptop/tablet wali image, neeche mobile wali
+    const {
+      props: { srcSet: desktopSet },
+    } = getImageProps({ ...common, src: slide.image });
+    const {
+      props: { srcSet: mobileSet, ...rest },
+    } = getImageProps({ ...common, src: slide.mobileImage });
+
+    background = (
+      <picture>
+        <source media="(min-width: 768px)" srcSet={desktopSet} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img {...rest} srcSet={mobileSet} alt={slide.title} />
+      </picture>
+    );
+  } else {
+    background = <Image {...common} src={slide.image} />;
+  }
+
   return (
     <div
       inert={!active}
       className={`absolute inset-0 transition-opacity duration-1000 ${active ? "opacity-100" : "opacity-0"}`}
     >
-      <Image
-        src={slide.image}
-        alt={slide.title}
-        fill
-        priority={priority}
-        quality={90}
-        sizes="100vw"
-        className="object-cover object-center"
-      />
+      {background}
       {/* upar thora dark taake transparent header ke white icons/logo saaf dikhein */}
       <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/25 to-black/50" />
 

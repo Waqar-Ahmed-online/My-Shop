@@ -17,6 +17,7 @@ export async function getSlides(): Promise<Slide[]> {
   return docs.map((d) => ({
     id: String(d._id),
     image: d.image,
+        mobileImage: d.mobileImage ?? "",
     eyebrow: d.eyebrow,
     title: d.title,
     primaryBtn: d.primaryBtn,
@@ -44,9 +45,10 @@ type FanModelLean = {
   oldPrice?: number | null;
   image: string;
   category: string;
+      fanType?: string;
   sizes?: string[];
   inStock?: boolean;
-  colors?: { _id: { toString(): string }; name: string; hex: string; image: string }[];
+  colors?: { _id: { toString(): string }; name: string; hex: string; hex2?: string; image: string }[];
 };
 
 function toFanModel(d: FanModelLean): FanModel {
@@ -57,12 +59,14 @@ function toFanModel(d: FanModelLean): FanModel {
     oldPrice: d.oldPrice ?? null,
     image: d.image,
     category: d.category,
+          fanType: d.fanType ?? "",
     sizes: d.sizes ?? [],
     inStock: d.inStock ?? true,
     colors: (d.colors ?? []).map((c) => ({
       id: String(c._id),
       name: c.name,
       hex: c.hex,
+      hex2: c.hex2 || "",
       image: c.image,
     })),
   };

@@ -19,6 +19,7 @@ export type Brand = {
 export type Slide = {
   id: string;
   image: string;
+    mobileImage: string;
   eyebrow: string;
   title: string;
   primaryBtn: string;
@@ -34,6 +35,7 @@ export type FanColor = {
   id: string;
   name: string;
   hex: string;
+  hex2?: string;
   image: string;
 };
 
@@ -45,6 +47,7 @@ export type FanModel = {
   oldPrice: number | null;
   image: string;
   category: string;
+    fanType: string;
   sizes: string[];
   inStock: boolean;
   colors: FanColor[];

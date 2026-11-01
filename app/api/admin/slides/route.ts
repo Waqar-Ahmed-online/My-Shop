@@ -1,44 +1,45 @@
 import type { NextRequest } from "next/server";
-import type { UploadApiResponse } from "cloudinary";
 import { revalidateTag } from "next/cache";
-import cloudinary from "@/lib/cloudinary";
 import { connectDB } from "@/lib/mongodb";
 import SlideModel from "@/models/Slide";
-import { checkImage } from "@/lib/upload";
+import { checkImage, uploadImage } from "@/lib/upload";
 
+const FOLDER = "abrar-electronics/hero";
 
 export async function GET() {
   await connectDB();
   const docs = await SlideModel.find().sort({ createdAt: 1 }).lean();
-  return Response.json(
-    docs.map((d) => ({ ...d, _id: String(d._id) }))
-  );
+  return Response.json(docs.map((d) => ({ ...d, _id: String(d._id) })));
 }
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
   const file = form.get("image") as File | null;
+  const mobile = form.get("mobileImage") as File | null;
+  const mobileFile = mobile && mobile.size > 0 ? mobile : null;
   const title = String(form.get("title") ?? "").trim();
 
   if (!file || file.size === 0 || !title) {
-    return Response.json({ error: "Image aur title zaroori hain" }, { status: 400 });
+    return Response.json({ error: "Laptop image aur title zaroori hain" }, { status: 400 });
   }
-  const bad = checkImage(file);
-if (bad) return Response.json({ error: bad }, { status: 400 });
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const uploaded = await new Promise<UploadApiResponse>((resolve, reject) => {
-    cloudinary.uploader
-      .upload_stream({ folder: "abrar-electronics/hero" }, (err, result) =>
-        err || !result ? reject(err) : resolve(result)
-      )
-      .end(buffer);
-  });
+  // upload se pehle dono check karo
+  const bad = checkImage(file);
+  if (bad) return Response.json({ error: `Laptop image: ${bad}` }, { status: 400 });
+  if (mobileFile) {
+    const badM = checkImage(mobileFile);
+    if (badM) return Response.json({ error: `Mobile image: ${badM}` }, { status: 400 });
+  }
+
+  const uploaded = await uploadImage(file, FOLDER);
+  const uploadedMobile = mobileFile ? await uploadImage(mobileFile, FOLDER) : null;
 
   await connectDB();
   const slide = await SlideModel.create({
     image: uploaded.secure_url,
     publicId: uploaded.public_id,
+    mobileImage: uploadedMobile?.secure_url ?? "",
+    mobilePublicId: uploadedMobile?.public_id ?? "",
     title,
     eyebrow: String(form.get("eyebrow") ?? ""),
     primaryBtn: String(form.get("primaryBtn") || "Shop Now"),

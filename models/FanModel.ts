@@ -3,6 +3,7 @@ import { Schema, model, models } from "mongoose";
 const ColorSchema = new Schema({
   name: { type: String, required: true },
   hex: { type: String, default: "#cccccc" },
+    hex2: { type: String, default: "" },
   image: { type: String, required: true },
   publicId: { type: String, required: true },
 });
@@ -10,6 +11,7 @@ const ColorSchema = new Schema({
 const FanModelSchema = new Schema(
   {
     category: { type: String, required: true, index: true },
+        fanType: { type: String, default: "" },
     name: { type: String, required: true },
     price: { type: Number, default: null },
     oldPrice: { type: Number, default: null },

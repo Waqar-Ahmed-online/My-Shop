@@ -1,17 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { FanCard } from "@/types";
+import ParallaxBg from "./ParallaxBg";
 
 export default function FanCards({ cards }: { cards: FanCard[] }) {
   if (cards.length === 0) return null;
 
   return (
-    <section className="bg-white px-4 py-14 sm:px-6">
+    <section className="relative isolate px-4 py-14 sm:px-6">
+      <ParallaxBg src="/images/fan-bg.jpg" overlay="bg-black/35" />
+
       <div className="mx-auto max-w-6xl">
-        <p className="text-center text-[0.65rem] uppercase tracking-[0.3em] text-neutral-500">
+        <p className="text-center text-[0.65rem] uppercase tracking-[0.3em] text-white/80">
           Cool Comfort
         </p>
-        <h2 className="mt-2 text-center font-display text-4xl font-semibold uppercase tracking-wide text-neutral-900 sm:text-5xl">
+        <h2 className="mt-2 text-center font-display text-4xl font-semibold uppercase tracking-wide text-white drop-shadow-sm sm:text-5xl">
           Ceiling Fan
         </h2>
 

@@ -4,7 +4,7 @@ import cloudinary from "@/lib/cloudinary";
 import { connectDB } from "@/lib/mongodb";
 import { checkImage, uploadImage } from "@/lib/upload";
 import FanModelDoc from "@/models/FanModel";
-
+  import { FAN_TYPES } from "@/lib/fanTypes";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PUT(req: NextRequest, { params }: Ctx) {
@@ -19,6 +19,8 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
     .map((s) => s.trim())
     .filter(Boolean);
   const inStock = form.get("inStock") !== "0";
+    const fanTypeRaw = String(form.get("fanType") ?? "");
+  const fanType = FAN_TYPES.some((t) => t.value === fanTypeRaw) ? fanTypeRaw : "";
 
   if (!name || !category) {
     return Response.json({ error: "Category aur naam zaroori hain" }, { status: 400 });
@@ -44,6 +46,7 @@ if (bad) return Response.json({ error: bad }, { status: 400 });
   doc.oldPrice = oldRaw ? Number(oldRaw) : null;
     doc.sizes = sizes;
   doc.inStock = inStock;
+    doc.fanType = fanType;
   await doc.save();
 
   revalidateTag("fan-models", { expire: 0 });

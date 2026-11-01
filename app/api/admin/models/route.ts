@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { connectDB } from "@/lib/mongodb";
 import { checkImage, uploadImage } from "@/lib/upload";
 import FanModelDoc from "@/models/FanModel";
-
+  import { FAN_TYPES } from "@/lib/fanTypes";
 export async function GET() {
   await connectDB();
   const docs = await FanModelDoc.find().sort({ createdAt: 1 }).lean();
@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
     .map((s) => s.trim())
     .filter(Boolean);
   const inStock = form.get("inStock") !== "0";
+    const fanTypeRaw = String(form.get("fanType") ?? "");
+  const fanType = FAN_TYPES.some((t) => t.value === fanTypeRaw) ? fanTypeRaw : "";
 
   if (!file || file.size === 0 || !name || !category) {
     return Response.json({ error: "Category, image aur naam zaroori hain" }, { status: 400 });
@@ -33,6 +35,7 @@ if (bad) return Response.json({ error: bad }, { status: 400 });
   await connectDB();
   const doc = await FanModelDoc.create({
     category,
+          fanType,
     name,
     price: priceRaw ? Number(priceRaw) : null,
     oldPrice: oldRaw ? Number(oldRaw) : null,

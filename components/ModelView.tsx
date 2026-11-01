@@ -55,7 +55,7 @@ export default function ModelView({ model, category }: Props) {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {}
+    } catch { }
   }
 
   const shareBtn =
@@ -106,15 +106,18 @@ export default function ModelView({ model, category }: Props) {
                         title={c.name}
                         aria-label={c.name}
                         aria-pressed={active}
-                        className={`h-10 w-10 border-2 p-[3px] transition ${
-                          active
+                        className={`h-10 w-10 border-2 p-[3px] transition ${active
                             ? "border-neutral-900"
                             : "border-neutral-300 hover:border-neutral-500"
-                        }`}
+                          }`}
                       >
                         <span
                           className="flex h-full w-full items-center justify-center"
-                          style={{ backgroundColor: c.hex }}
+                          style={
+                            c.hex2
+                              ? { background: `linear-gradient(135deg, ${c.hex} 50%, ${c.hex2} 50%)` }
+                              : { backgroundColor: c.hex }
+                          }
                         >
                           {active && (
                             <Check
@@ -144,11 +147,10 @@ export default function ModelView({ model, category }: Props) {
                       type="button"
                       onClick={() => setSize(s)}
                       aria-pressed={s === size}
-                      className={`h-10 min-w-10 border-2 px-3 text-sm transition ${
-                        s === size
+                      className={`h-10 min-w-10 border-2 px-3 text-sm transition ${s === size
                           ? "border-neutral-900 text-neutral-900"
                           : "border-neutral-300 text-neutral-600 hover:border-neutral-500"
-                      }`}
+                        }`}
                     >
                       {s}
                     </button>
@@ -161,9 +163,8 @@ export default function ModelView({ model, category }: Props) {
 
         <div className={`mt-6 pt-6 ${dashed}`}>
           <p
-            className={`text-sm font-semibold ${
-              model.inStock ? "text-green-600" : "text-red-600"
-            }`}
+            className={`text-sm font-semibold ${model.inStock ? "text-green-600" : "text-red-600"
+              }`}
           >
             {model.inStock ? "In stock" : "Out of stock"}
           </p>

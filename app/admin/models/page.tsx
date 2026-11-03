@@ -23,6 +23,7 @@ type Pending = {
   name: string;
   hex: string;
   hex2: string; // khali = single color, bhara = two-tone
+    nameEdited: boolean; // true = naam aap ne haath se likha
 };
 
 const empty = { category: "", fanType: "", name: "", price: "", oldPrice: "", sizes: "", inStock: "1" };
@@ -37,7 +38,73 @@ const smallBtn =
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const validHex = (h: string) => (HEX.test(h) ? h : "#cccccc");
+/* ---------- rang se naam banana ---------- */
 
+const COLOR_NAMES: [string, string][] = [
+  ["White", "#f5f5f3"],
+  ["Cream", "#eee6cf"],
+  ["Beige", "#d9c9a5"],
+  ["Silver", "#c3c5c8"],
+  ["Grey", "#8b8e91"],
+  ["Dark Grey", "#4d4f52"],
+  ["Black", "#17171a"],
+  ["Brown", "#6e4b33"],
+  ["Dark Brown", "#3d2a1d"],
+  ["Wood", "#b98a52"],
+  ["Gold", "#c8a24e"],
+  ["Yellow", "#e8c240"],
+  ["Copper", "#b46a3c"],
+  ["Bronze", "#8b6b3d"],
+  ["Orange", "#dd8030"],
+  ["Red", "#b3261e"],
+  ["Maroon", "#6a1f2c"],
+  ["Pink", "#d98aa7"],
+  ["Blue", "#2160d6"],
+  ["Navy", "#1b2a5c"],
+  ["Green", "#2f7d52"],
+];
+
+function hexToLab(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  const lin = (c: number) => {
+    c /= 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const r = lin((n >> 16) & 255);
+  const g = lin((n >> 8) & 255);
+  const b = lin(n & 255);
+  const x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+  const y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+  const z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+  const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
+}
+
+const PALETTE = COLOR_NAMES.map(([name, hex]) => ({ name, lab: hexToLab(hex) }));
+
+// sab se qareeb rang ka naam
+function nearestColorName(hex: string): string {
+  const lab = hexToLab(validHex(hex));
+  let best = PALETTE[0];
+  let bestD = Infinity;
+  for (const p of PALETTE) {
+    const d =
+      (p.lab[0] - lab[0]) ** 2 + (p.lab[1] - lab[1]) ** 2 + (p.lab[2] - lab[2]) ** 2;
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  return best.name;
+}
+
+// single: "Gold"   two-tone: "Gold & Black"
+function autoName(hex: string, hex2?: string): string {
+  const a = nearestColorName(hex);
+  if (!hex2 || !HEX.test(hex2)) return a;
+  const b = nearestColorName(hex2);
+  return a === b ? a : `${a} & ${b}`;
+}
 // single ya two-tone (diagonal) swatch ki style
 const swatchStyle = (hex: string, hex2?: string): React.CSSProperties =>
   hex2 && HEX.test(hex2)
@@ -45,9 +112,7 @@ const swatchStyle = (hex: string, hex2?: string): React.CSSProperties =>
     : { backgroundColor: validHex(hex) };
 
 // "cream_K-78.png" -> "cream K-78"
-function cleanName(filename: string) {
-  return filename.replace(/\.[^.]+$/, "").replace(/_+/g, " ").replace(/\s+/g, " ").trim();
-}
+
 
 // screen par kahin se bhi rang uthao (Chrome / Edge)
 type EyeDropperCtor = new () => { open: () => Promise<{ sRGBHex: string }> };
@@ -167,21 +232,35 @@ function ColorQueue({
     el.value = ""; // dobara aur images bhi add ho saken
     if (files.length === 0) return;
 
-    const added: Pending[] = await Promise.all(
-      files.map(async (file) => ({
-        id: crypto.randomUUID(),
-        file,
-        preview: URL.createObjectURL(file),
-        name: cleanName(file.name),
-        hex: await pickColor(file),
-        hex2: "",
-      }))
+       const added: Pending[] = await Promise.all(
+      files.map(async (file) => {
+        const hex = await pickColor(file);
+        return {
+          id: crypto.randomUUID(),
+          file,
+          preview: URL.createObjectURL(file),
+          name: autoName(hex),
+          hex,
+          hex2: "",
+          nameEdited: false,
+        };
+      })
     );
     setRows((r) => [...r, ...added]);
   }
 
-  function update(id: string, patch: Partial<Pending>) {
-    setRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+   function update(id: string, patch: Partial<Pending>) {
+    setRows((r) =>
+      r.map((x) => {
+        if (x.id !== id) return x;
+        const next = { ...x, ...patch };
+        // rang badalne par naam khud badle (agar aap ne naam haath se na likha ho)
+        if (!next.nameEdited && ("hex" in patch || "hex2" in patch)) {
+          next.name = autoName(next.hex, next.hex2);
+        }
+        return next;
+      })
+    );
   }
 
   function remove(id: string) {
@@ -216,7 +295,9 @@ function ColorQueue({
             <img src={r.preview} alt="" className="h-12 w-12 shrink-0 bg-white object-contain" />
             <input
               value={r.name}
-              onChange={(e) => update(r.id, { name: e.target.value })}
+                            onChange={(e) =>
+                update(r.id, { name: e.target.value, nameEdited: e.target.value.trim() !== "" })
+              }
               placeholder="Color ka naam"
               disabled={disabled}
               className={`${input} min-w-32 flex-1`}
@@ -689,18 +770,19 @@ export default function AdminModels() {
           required
           className={input}
         >
-                         <select name="fanType" value={values.fanType} onChange={change} className={input}>
-          <option value="">Auto (naam se pehchane)</option>
-          {FAN_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
           <option value="">Category chuno (SK, Khurshid...)</option>
           {options.map((o) => (
             <option key={o.slug} value={o.slug}>
               {o.label}
+            </option>
+          ))}
+        </select>
+
+        <select name="fanType" value={values.fanType} onChange={change} className={input}>
+          <option value="">Auto (naam se pehchane)</option>
+          {FAN_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
             </option>
           ))}
         </select>

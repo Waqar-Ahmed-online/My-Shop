@@ -4,6 +4,8 @@ import { connectDB } from "@/lib/mongodb";
 import { checkImage, uploadImage } from "@/lib/upload";
 import FanCardModel from "@/models/FanCard";
 
+const MAX_PER_GROUP = 3;
+
 export async function GET() {
   await connectDB();
   const docs = await FanCardModel.find().sort({ createdAt: 1 }).lean();
@@ -14,16 +16,23 @@ export async function POST(req: NextRequest) {
   const form = await req.formData();
   const file = form.get("image") as File | null;
   const label = String(form.get("label") ?? "").trim();
+  const group = String(form.get("group") ?? "fan") === "converter" ? "converter" : "fan";
 
   if (!file || file.size === 0 || !label) {
     return Response.json({ error: "Image aur label zaroori hain" }, { status: 400 });
   }
-const bad = checkImage(file);
-if (bad) return Response.json({ error: bad }, { status: 400 });
+  const bad = checkImage(file);
+  if (bad) return Response.json({ error: bad }, { status: 400 });
+
   await connectDB();
-  if ((await FanCardModel.countDocuments()) >= 3) {
+
+  // purane cards (group nahi likha) fan mein ginay jate hain
+  const inGroup = await FanCardModel.countDocuments(
+    group === "converter" ? { group: "converter" } : { group: { $ne: "converter" } }
+  );
+  if (inGroup >= MAX_PER_GROUP) {
     return Response.json(
-      { error: "Sirf 3 cards ho sakte hain. Pehle koi delete karo." },
+      { error: `Is section mein sirf ${MAX_PER_GROUP} cards ho sakte hain. Pehle koi delete karo.` },
       { status: 400 }
     );
   }
@@ -34,6 +43,7 @@ if (bad) return Response.json({ error: bad }, { status: 400 });
     publicId: uploaded.public_id,
     label,
     href: String(form.get("href") || "#"),
+    group,
   });
 
   revalidateTag("fan-cards", { expire: 0 });

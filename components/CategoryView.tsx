@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
 import type { FanModel } from "@/types";
-import { FAN_TYPES, getFanType } from "@/lib/fanTypes";
+import { FAN_TYPES, detectWatt, getFanType } from "@/lib/fanTypes";
 import { rs } from "@/lib/format";
 
 type Sort = "default" | "low" | "high";
@@ -37,25 +37,52 @@ export default function CategoryView({
   label,
   category,
   models,
+  group = "fan",
 }: {
   label: string;
   category: string;
   models: FanModel[];
+  group?: string;
 }) {
+  const isConverter = group === "converter";
   const [type, setType] = useState<string>("all");
   const [sort, setSort] = useState<Sort>("default");
   const [open, setOpen] = useState(false); // mobile filter panel
 
+  // filter ki key: fan = type, converter = watt
+  const keyOf = (m: FanModel) =>
+    isConverter ? String(detectWatt(m.name) ?? "") : getFanType(m);
+
+  const wattTabs = Array.from(
+    new Set(
+      models.map((m) => detectWatt(m.name)).filter((w): w is number => w !== null)
+    )
+  )
+    .sort((a, b) => a - b)
+    .map((w) => ({
+      value: String(w),
+      label: `${w}W`,
+      count: models.filter((m) => detectWatt(m.name) === w).length,
+    }));
+
+  const fanTabs = FAN_TYPES.map((t) => ({
+    value: t.value as string,
+    label: t.label as string,
+    count: models.filter((m) => getFanType(m) === t.value).length,
+  }));
+
   const tabs = [
     { value: "all", label: "All", count: models.length },
-    ...FAN_TYPES.map((t) => ({
-      value: t.value as string,
-      label: t.label as string,
-      count: models.filter((m) => getFanType(m) === t.value).length,    })),
+    ...(isConverter ? wattTabs : fanTabs),
   ];
 
   const list = useMemo(() => {
-         const filtered = type === "all" ? models : models.filter((m) => getFanType(m) === type);
+    const filtered =
+      type === "all"
+        ? models
+        : models.filter((m) =>
+            (isConverter ? String(detectWatt(m.name) ?? "") : getFanType(m)) === type
+          );
     if (sort === "default") return filtered;
     // price na ho to hamesha aakhir mein
     return [...filtered].sort((a, b) => {
@@ -64,22 +91,22 @@ export default function CategoryView({
       if (b.price === null) return -1;
       return sort === "low" ? a.price - b.price : b.price - a.price;
     });
-  }, [models, type, sort]);
+  }, [models, type, sort, isConverter]);
 
   const filterActive = type !== "all" || sort !== "default";
 
   return (
     <div className="mx-auto max-w-[1400px]">
-      {/* Heading row: [links] [SK FAN] [sort] */}
+      {/* Heading row: [links] [heading] [sort] */}
       <div className="relative lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:gap-6">
         {/* Desktop: left side links (row wise) */}
-                <nav className="hidden lg:flex lg:flex-wrap lg:items-center lg:gap-2">
+        <nav className="hidden lg:flex lg:flex-wrap lg:items-center lg:gap-2">
           {tabs.map((t) => (
             <button
               key={t.value}
               type="button"
               onClick={() => setType(t.value)}
-                            className={`rounded-full px-4 py-1.5 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+              className={`rounded-full px-4 py-1.5 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                 type === t.value
                   ? "bg-neutral-900 font-semibold text-white"
                   : "bg-white/85 text-neutral-800 hover:bg-white"
@@ -90,7 +117,7 @@ export default function CategoryView({
           ))}
         </nav>
 
-                <h1 className="px-12 text-center font-display text-4xl font-semibold uppercase tracking-wide text-white drop-shadow-sm sm:text-5xl lg:px-0">
+        <h1 className="px-12 text-center font-display text-4xl font-semibold uppercase tracking-wide text-white drop-shadow-sm sm:text-5xl lg:px-0">
           {label}
         </h1>
 
@@ -164,13 +191,13 @@ export default function CategoryView({
         )}
       </div>
 
-           {list.length === 0 ? (
+      {list.length === 0 ? (
         <p className="mt-12 text-center text-sm text-white">
           Is filter mein abhi koi model nahi hai.
         </p>
       ) : (
         <div className="mx-auto mt-8 grid max-w-md grid-cols-1 gap-6 lg:mt-10 lg:max-w-none lg:grid-cols-3 lg:gap-8">
-                           {list.map((m, i) => {
+          {list.map((m, i) => {
             const discount =
               m.oldPrice !== null && m.price !== null && m.oldPrice > m.price
                 ? Math.round(((m.oldPrice - m.price) / m.oldPrice) * 100)
@@ -183,7 +210,9 @@ export default function CategoryView({
                 className="group flex flex-col overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {/* photo */}
-                <div className="relative aspect-square bg-white">
+                               <div
+                  className={`relative bg-white ${isConverter ? "aspect-3/4" : "aspect-square"}`}
+                >
                   {discount > 0 && m.inStock && (
                     <span className="absolute left-3 top-3 z-10 rounded bg-red-600 px-2 py-1 text-xs font-bold text-white">
                       -{discount}%
@@ -201,7 +230,9 @@ export default function CategoryView({
                     quality={90}
                     priority={i < 3}
                     sizes="(min-width: 1024px) 33vw, 100vw"
-                    className={`object-contain p-3 transition duration-500 group-hover:scale-105 ${
+                                       className={`${
+                      isConverter ? "object-cover" : "object-contain p-3"
+                    } transition duration-500 group-hover:scale-105 ${
                       m.inStock ? "" : "opacity-50"
                     }`}
                   />

@@ -1,26 +1,37 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import Container from "./Container";
 import Logo from "./Logo";
 import SearchBar from "./SearchBar";
 import CartButton from "./CartButton";
 
-const links = ["Home", "Shop", "Deals", "About Us", "Contact"];
+type Active = "home" | "collection";
 
-export default function Header() {
+const links: { label: string; href: string; key?: Active }[] = [
+  { label: "Home", href: "/", key: "home" },
+  { label: "Collection", href: "/collection", key: "collection" },
+  { label: "Deals", href: "#" },
+  { label: "About Us", href: "#" },
+  { label: "Contact", href: "#" },
+];
+
+export default function Header({ active = "home" }: { active?: Active }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Container className="relative flex items-center justify-between gap-4 py-3">
-      <Logo />
+         <Link href="/" aria-label="Abrar Store - Home" className="shrink-0">
+        <Logo />
+      </Link>
 
       {/* Bari screen (xl) par links seedhe navbar mein */}
       <ul className="hidden items-center gap-8 text-sm font-medium xl:flex">
-        {links.map((l, i) => (
-          <li key={l} className={i === 0 ? "text-brand" : ""}>
-            <a href="#">{l}</a>
+        {links.map((l) => (
+          <li key={l.label} className={l.key === active ? "text-brand" : ""}>
+            <Link href={l.href}>{l.label}</Link>
           </li>
         ))}
       </ul>
@@ -50,15 +61,15 @@ export default function Header() {
             <SearchBar />
           </div>
           <ul className="mt-2 flex flex-col text-sm font-medium sm:mt-0">
-            {links.map((l, i) => (
-              <li key={l} className="border-b border-neutral-100 last:border-0">
-                <a
-                  href="#"
+            {links.map((l) => (
+              <li key={l.label} className="border-b border-neutral-100 last:border-0">
+                <Link
+                  href={l.href}
                   onClick={() => setOpen(false)}
-                  className={`block py-3 ${i === 0 ? "text-gold-dark" : "hover:text-gold-dark"}`}
+                  className={`block py-3 ${l.key === active ? "text-gold-dark" : "hover:text-gold-dark"}`}
                 >
-                  {l}
-                </a>
+                  {l.label}
+                </Link>
               </li>
             ))}
           </ul>

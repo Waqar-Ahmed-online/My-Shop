@@ -36,6 +36,7 @@ export async function getFanCards(): Promise<FanCard[]> {
     image: d.image,
     label: d.label,
     href: d.href,
+        group: d.group ?? "fan",
   }));
 }
 type FanModelLean = {

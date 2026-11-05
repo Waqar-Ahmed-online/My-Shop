@@ -30,6 +30,7 @@ export type FanCard = {
   image: string;
   label: string;
   href: string;
+    group: string;
 };
 export type FanColor = {
   id: string;

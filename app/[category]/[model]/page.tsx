@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import ModelView from "@/components/ModelView";
 import { getFanCards, getFanModel, getFanModels } from "@/lib/data";
-
+import LoaderScreen from "@/components/LoaderScreen";
 export async function generateStaticParams() {
   const models = await getFanModels();
   if (models.length === 0) return [{ category: "sk-fan-categories", model: "none" }];
@@ -43,7 +43,7 @@ export default function ModelPage(props: PageProps<"/[category]/[model]">) {
         <Header />
       </header>
       <main className="min-h-screen bg-white px-4 py-10 sm:px-6">
-        <Suspense fallback={<p className="text-center text-neutral-500">Loading...</p>}>
+               <Suspense fallback={<LoaderScreen />}>
           <Content params={props.params} />
         </Suspense>
       </main>

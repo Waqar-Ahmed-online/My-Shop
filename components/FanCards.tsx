@@ -3,38 +3,75 @@ import Link from "next/link";
 import type { FanCard } from "@/types";
 import ParallaxBg from "./ParallaxBg";
 
-export default function FanCards({ cards }: { cards: FanCard[] }) {
+export default function FanCards({
+  cards,
+  eyebrow,
+  title,
+  bg,
+  light = false,
+}: {
+  cards: FanCard[];
+  eyebrow?: string;
+  title: string;
+  bg?: string; // background image ka path
+  light?: boolean; // true = safed background aur kali heading
+}) {
   if (cards.length === 0) return null;
 
   return (
-    <section className="relative isolate px-4 py-14 sm:px-6">
-      <ParallaxBg src="/images/fan-bg.jpg" overlay="bg-black/35" />
+    <section
+            className={`relative isolate px-4 py-14 sm:px-6 ${
+        light ? "bg-linear-to-b from-[#f4e7cc] via-[#faf3e3] to-[#efe0c0]" : ""
+      }`}
+    >
+      {!light &&
+        (bg ? (
+          <ParallaxBg src={bg} />
+        ) : (
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-10 bg-linear-to-b from-[#0b1f3a] via-[#10294a] to-[#071426]"
+          />
+        ))}
 
       <div className="mx-auto max-w-6xl">
-        <p className="text-center text-[0.65rem] uppercase tracking-[0.3em] text-white/80">
-          Cool Comfort
-        </p>
-        <h2 className="mt-2 text-center font-display text-4xl font-semibold uppercase tracking-wide text-white drop-shadow-sm sm:text-5xl">
-          Ceiling Fan
+        {eyebrow && (
+          <p
+            className={`text-center text-[0.65rem] uppercase tracking-[0.3em] ${
+              light ? "text-neutral-500" : "text-white/80"
+            }`}
+          >
+            {eyebrow}
+          </p>
+        )}
+        <h2
+          className={`text-center font-display text-4xl font-semibold uppercase tracking-wide sm:text-5xl ${
+                       light ? "text-[#3a2a1a]" : "text-white drop-shadow-sm"
+          } ${eyebrow ? "mt-2" : ""}`}
+        >
+          {title}
         </h2>
+                {light && <div className="mx-auto mt-4 h-0.5 w-16 bg-brand" />}
 
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+        {/* -mx-2.5 aur p-2.5 se cards ke beech 20px ka gap banta hai */}
+        <div className="-mx-2.5 mt-10 flex flex-wrap justify-center">
           {cards.map((c) => (
-            <Link
-              key={c.id}
-              href={c.href || "#"}
-              aria-label={c.label}
-              className="group relative block aspect-3/4 overflow-hidden border border-neutral-200 shadow-sm transition hover:shadow-lg"
-            >
-              <Image
-                src={c.image}
-                alt={c.label}
-                fill
-                quality={90}
-                sizes="(min-width: 768px) 33vw, 100vw"
-                className="object-cover object-center transition duration-700 group-hover:scale-105"
-              />
-            </Link>
+            <div key={c.id} className="w-full max-w-md p-2.5 md:w-1/3 md:max-w-none">
+              <Link
+                href={c.href || "#"}
+                aria-label={c.label}
+                className="group relative block aspect-3/4 overflow-hidden border border-neutral-200 shadow-md transition hover:shadow-xl"
+              >
+                <Image
+                  src={c.image}
+                  alt={c.label}
+                  fill
+                  quality={90}
+                  sizes="(min-width: 768px) 33vw, 100vw"
+                  className="object-cover object-center transition duration-700 group-hover:scale-105"
+                />
+              </Link>
+            </div>
           ))}
         </div>
       </div>

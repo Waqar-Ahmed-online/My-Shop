@@ -18,3 +18,9 @@ export function detectFanType(name: string): FanTypeValue {
 export function getFanType(m: { name: string; fanType?: string }): string {
   return m.fanType || detectFanType(m.name);
 }
+
+// converter: "Oval Gold 2500W" -> 2500
+export function detectWatt(name: string): number | null {
+  const m = name.match(/(\d{2,5})\s*(?:w\b|watts?\b)/i);
+  return m ? Number(m[1]) : null;
+}

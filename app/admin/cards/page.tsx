@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-type Row = { _id: string; image: string; label: string; href: string };
+type Row = { _id: string; image: string; label: string; href: string; group?: string };
+
+const MAX = 3;
 
 const empty = { label: "", href: "" };
-const MAX = 3;
 
 export default function AdminCards() {
   const [cards, setCards] = useState<Row[]>([]);
@@ -17,7 +18,11 @@ export default function AdminCards() {
 
   async function load() {
     const res = await fetch("/api/admin/cards");
-    if (res.ok) setCards(await res.json());
+    if (res.ok) {
+      const all: Row[] = await res.json();
+      // converter ke cards yahan nahi, wo "Converters" tab mein hain
+      setCards(all.filter((c) => c.group !== "converter"));
+    }
   }
 
   useEffect(() => {
@@ -71,80 +76,85 @@ export default function AdminCards() {
 
   const input =
     "w-full border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white outline-none focus:border-brand";
-  const full = cards.length >= MAX && !editingId;
 
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-1 text-2xl font-bold">Ceiling Fan Cards</h1>
       <p className="mb-6 text-sm text-neutral-400">
-        Home page par hero ke neeche {MAX} cards dikhte hain ({cards.length}/{MAX}).
+        Home page par &quot;Ceiling Fan&quot; section ke cards (SK, Khurshid, Agha). Is mein{" "}
+        {MAX} tak cards ho sakte hain. Converter ke cards alag tab (Converters) mein hain.
       </p>
 
-      {full ? (
-        <p className="mb-8 border border-neutral-800 p-4 text-sm text-neutral-400">
-          3 cards ho chuke hain. Naya add karne ke liye pehle koi delete karo, ya Edit karke
-          image badlo.
+      <form onSubmit={onSubmit} className="mb-8 space-y-3 border border-neutral-800 p-4">
+        <p className="text-sm font-semibold text-brand">
+          {editingId ? "Card edit karo" : "Naya card add karo"}
         </p>
-      ) : (
-        <form onSubmit={onSubmit} className="mb-8 space-y-3 border border-neutral-800 p-4">
-          <p className="text-sm font-semibold text-brand">
-            {editingId ? "Card edit karo" : "Naya card add karo"}
-          </p>
 
-          <div>
-            <input
-              key={fileKey}
-              type="file"
-              name="image"
-              accept="image/*"
-              required={!editingId}
-              className={input}
-            />
-            <p className="mt-1 text-xs text-neutral-400">
-              {editingId
-                ? "Image badalni ho tabhi choose karo, warna purani rahegi."
-                : "Lambi (portrait) image use karo, jaise 1200 x 1600."}
-            </p>
-          </div>
+        {/* ye page hamesha pankhon ke liye hai */}
+        <input type="hidden" name="group" value="fan" />
 
+        <div>
           <input
-            name="label"
-            value={values.label}
-            onChange={change}
-            placeholder="Label (e.g. Wooden Fans)"
-            required
+            key={fileKey}
+            type="file"
+            name="image"
+            accept="image/*"
+            required={!editingId}
             className={input}
           />
+          <p className="mt-1 text-xs text-neutral-400">
+            {editingId
+              ? "Image badalni ho tabhi choose karo, warna purani rahegi."
+              : "Lambi (portrait) image use karo, jaise 1200 x 1600."}
+          </p>
+        </div>
+
+        <input
+          name="label"
+          value={values.label}
+          onChange={change}
+          placeholder="Label (e.g. SK Fan)"
+          required
+          className={input}
+        />
+        <div>
           <input
             name="href"
             value={values.href}
             onChange={change}
-            placeholder="Link (optional, e.g. /shop)"
+            placeholder="Link (e.g. /sk-fan-categories)"
             className={input}
           />
+          <p className="mt-1 text-xs text-neutral-400">
+            Link / se shuru, chhote harf aur dash se likho (jaise /sk-fan-categories). Models add
+            karte waqt isi card ko category chunna hota hai.
+          </p>
+        </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-red-500">{error}</p>}
 
-          <div className="flex gap-3">
+        <div className="flex gap-3">
+          <button
+            disabled={loading}
+            className="bg-brand px-5 py-2 text-sm font-semibold text-black disabled:opacity-50"
+          >
+            {loading ? "Saving..." : editingId ? "Update Card" : "Add Card"}
+          </button>
+          {editingId && (
             <button
-              disabled={loading}
-              className="bg-brand px-5 py-2 text-sm font-semibold text-black disabled:opacity-50"
+              type="button"
+              onClick={reset}
+              className="border border-neutral-600 px-5 py-2 text-sm"
             >
-              {loading ? "Saving..." : editingId ? "Update Card" : "Add Card"}
+              Cancel
             </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={reset}
-                className="border border-neutral-600 px-5 py-2 text-sm"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-      )}
+          )}
+        </div>
+      </form>
 
+      <p className="mb-2 text-sm font-semibold text-neutral-300">
+        Ceiling Fan cards ({cards.length}/{MAX})
+      </p>
       <div className="space-y-3">
         {cards.map((c) => (
           <div
@@ -168,7 +178,7 @@ export default function AdminCards() {
           </div>
         ))}
         {cards.length === 0 && (
-          <p className="text-sm text-neutral-400">Abhi koi card nahi hai.</p>
+          <p className="text-sm text-neutral-500">Abhi koi card nahi hai.</p>
         )}
       </div>
     </div>

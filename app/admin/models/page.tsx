@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FAN_TYPES, getFanType } from "@/lib/fanTypes";
-type Card = { _id: string; label: string; href: string };
+type Card = { _id: string; label: string; href: string; group?: string };
 type ColorRow = { _id: string; name: string; hex: string; hex2?: string; image: string };
 type Row = {
   _id: string;
@@ -657,10 +657,19 @@ export default function AdminModels() {
       fetch("/api/admin/cards"),
       fetch("/api/admin/models"),
     ]);
-    if (c.ok) setCards(await c.json());
+    // converter ke cards/models yahan nahi, wo "Converters" tab mein hain
+    const allCards: Card[] = c.ok ? await c.json() : [];
+    const convSlugs = new Set(
+      allCards.filter((x) => x.group === "converter").map((x) => x.href.replace(/^\//, ""))
+    );
+    setCards(allCards.filter((x) => x.group !== "converter"));
     if (m.ok) {
       const data: Row[] = await m.json();
-      setModels(data.map((x) => ({ ...x, colors: x.colors ?? [], sizes: x.sizes ?? [] })));
+      setModels(
+        data
+          .filter((x) => !convSlugs.has(x.category))
+          .map((x) => ({ ...x, colors: x.colors ?? [], sizes: x.sizes ?? [] }))
+      );
     }
   }
 

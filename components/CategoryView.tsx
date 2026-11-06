@@ -5,10 +5,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
 import type { FanModel } from "@/types";
-import { FAN_TYPES, detectWatt, getFanType } from "@/lib/fanTypes";
+import { FAN_TYPES, detectAmp, detectVolt, detectWatt, getFanType } from "@/lib/fanTypes";
 import { rs } from "@/lib/format";
 
 type Sort = "default" | "low" | "high";
+
+// filter ki value (t) is model par lagti hai ya nahi
+function matches(m: FanModel, t: string, group: string) {
+  if (t === "all") return true;
+  if (group === "charger") {
+    if (t.startsWith("v")) return detectVolt(m.name) === Number(t.slice(1));
+    if (t.startsWith("a")) return detectAmp(m.name) === Number(t.slice(1));
+    return true;
+  }
+  if (group === "converter") return detectWatt(m.name) === Number(t);
+  return getFanType(m) === t;
+}
+
+const uniqSorted = (arr: (number | null)[]) =>
+  Array.from(new Set(arr.filter((x): x is number => x !== null))).sort((a, b) => a - b);
 
 function SortSelect({
   value,
@@ -44,45 +59,39 @@ export default function CategoryView({
   models: FanModel[];
   group?: string;
 }) {
-  const isConverter = group === "converter";
+  const isConverter = group === "converter"; // converter ki photos lambi hoti hain
   const [type, setType] = useState<string>("all");
   const [sort, setSort] = useState<Sort>("default");
   const [open, setOpen] = useState(false); // mobile filter panel
 
-  // filter ki key: fan = type, converter = watt
-  const keyOf = (m: FanModel) =>
-    isConverter ? String(detectWatt(m.name) ?? "") : getFanType(m);
-
-  const wattTabs = Array.from(
-    new Set(
-      models.map((m) => detectWatt(m.name)).filter((w): w is number => w !== null)
-    )
-  )
-    .sort((a, b) => a - b)
-    .map((w) => ({
+  let extra: { value: string; label: string }[];
+  if (group === "charger") {
+    extra = [
+      ...uniqSorted(models.map((m) => detectVolt(m.name))).map((v) => ({
+        value: `v${v}`,
+        label: `${v}V`,
+      })),
+      ...uniqSorted(models.map((m) => detectAmp(m.name))).map((a) => ({
+        value: `a${a}`,
+        label: `${a}A`,
+      })),
+    ];
+  } else if (group === "converter") {
+    extra = uniqSorted(models.map((m) => detectWatt(m.name))).map((w) => ({
       value: String(w),
       label: `${w}W`,
-      count: models.filter((m) => detectWatt(m.name) === w).length,
     }));
+  } else {
+    extra = FAN_TYPES.map((t) => ({ value: t.value as string, label: t.label as string }));
+  }
 
-  const fanTabs = FAN_TYPES.map((t) => ({
-    value: t.value as string,
-    label: t.label as string,
-    count: models.filter((m) => getFanType(m) === t.value).length,
+  const tabs = [{ value: "all", label: "All" }, ...extra].map((t) => ({
+    ...t,
+    count: models.filter((m) => matches(m, t.value, group)).length,
   }));
 
-  const tabs = [
-    { value: "all", label: "All", count: models.length },
-    ...(isConverter ? wattTabs : fanTabs),
-  ];
-
   const list = useMemo(() => {
-    const filtered =
-      type === "all"
-        ? models
-        : models.filter((m) =>
-            (isConverter ? String(detectWatt(m.name) ?? "") : getFanType(m)) === type
-          );
+    const filtered = models.filter((m) => matches(m, type, group));
     if (sort === "default") return filtered;
     // price na ho to hamesha aakhir mein
     return [...filtered].sort((a, b) => {
@@ -91,7 +100,7 @@ export default function CategoryView({
       if (b.price === null) return -1;
       return sort === "low" ? a.price - b.price : b.price - a.price;
     });
-  }, [models, type, sort, isConverter]);
+  }, [models, type, sort, group]);
 
   const filterActive = type !== "all" || sort !== "default";
 
@@ -150,7 +159,7 @@ export default function CategoryView({
               onClick={() => setOpen(false)}
               className="fixed inset-0 z-10 cursor-default lg:hidden"
             />
-            <div className="absolute left-0 top-full z-20 mt-3 w-64 border border-neutral-200 bg-white py-2 shadow-xl lg:hidden">
+            <div className="absolute left-0 top-full z-20 mt-3 max-h-[70vh] w-64 overflow-y-auto border border-neutral-200 bg-white py-2 shadow-xl lg:hidden">
               <p className="px-4 pb-1 pt-1 text-xs uppercase tracking-[0.2em] text-neutral-500">
                 Filter
               </p>
@@ -210,7 +219,7 @@ export default function CategoryView({
                 className="group flex flex-col overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {/* photo */}
-                               <div
+                <div
                   className={`relative bg-white ${isConverter ? "aspect-3/4" : "aspect-square"}`}
                 >
                   {discount > 0 && m.inStock && (
@@ -230,7 +239,7 @@ export default function CategoryView({
                     quality={90}
                     priority={i < 3}
                     sizes="(min-width: 1024px) 33vw, 100vw"
-                                       className={`${
+                    className={`${
                       isConverter ? "object-cover" : "object-contain p-3"
                     } transition duration-500 group-hover:scale-105 ${
                       m.inStock ? "" : "opacity-50"

@@ -29,7 +29,8 @@ if (bad) return Response.json({ error: bad }, { status: 400 });
 
   card.label = label;
   card.href = String(form.get("href") || "#");
-    card.group = String(form.get("group") ?? "fan") === "converter" ? "converter" : "fan";
+     const g = String(form.get("group") ?? "fan");
+  card.group = g === "converter" || g === "charger" ? g : "fan";
   await card.save();
 
   revalidateTag("fan-cards", { expire: 0 });

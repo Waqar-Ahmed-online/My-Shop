@@ -6,8 +6,8 @@ import { getFanCards, getSlides } from "@/lib/data";
 export default async function Home() {
   const [slides, cards] = await Promise.all([getSlides(), getFanCards()]);
 
-  const fanCards = cards.filter((c) => c.group !== "converter");
-  const converterCards = cards.filter((c) => c.group === "converter");
+  const fanCards = cards.filter((c) => !c.group || c.group === "fan");
+  const collectionCards = cards.filter((c) => c.group === "converter" || c.group === "charger");
 
   return (
     <>
@@ -17,8 +17,8 @@ export default async function Home() {
       </header>
       <main>
         <Hero slides={slides} />
-               <FanCards cards={fanCards} eyebrow="Cool Comfort" title="Ceiling Fan" bg="/images/fan-bg.jpg" />
-                       <FanCards cards={converterCards} title="Collection" light />
+        <FanCards cards={fanCards} eyebrow="Cool Comfort" title="Ceiling Fan" bg="/images/fan-bg.jpg" />
+        <FanCards cards={collectionCards} title="Collection" light />
       </main>
     </>
   );

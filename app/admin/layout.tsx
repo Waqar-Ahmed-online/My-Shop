@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/cards", label: "Ceiling Fan" },
   { href: "/admin/models", label: "Fan Models" },
   { href: "/admin/converters", label: "Converters" },
+  { href: "/admin/chargers", label: "Chargers" },
 ];
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      <nav className="grid grid-cols-2 gap-3 border-b border-neutral-800 p-6 md:grid-cols-5">
+      <nav className="grid grid-cols-2 gap-3 border-b border-neutral-800 p-6 md:grid-cols-6">
         {links.map((l) => {
           const active = pathname === l.href;
           return (

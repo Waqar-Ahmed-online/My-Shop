@@ -660,9 +660,9 @@ export default function AdminModels() {
     // converter ke cards/models yahan nahi, wo "Converters" tab mein hain
     const allCards: Card[] = c.ok ? await c.json() : [];
     const convSlugs = new Set(
-      allCards.filter((x) => x.group === "converter").map((x) => x.href.replace(/^\//, ""))
+            allCards.filter((x) => x.group && x.group !== "fan").map((x) => x.href.replace(/^\//, ""))
     );
-    setCards(allCards.filter((x) => x.group !== "converter"));
+        setCards(allCards.filter((x) => !x.group || x.group === "fan"));
     if (m.ok) {
       const data: Row[] = await m.json();
       setModels(

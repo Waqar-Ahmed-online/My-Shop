@@ -24,3 +24,15 @@ export function detectWatt(name: string): number | null {
   const m = name.match(/(\d{2,5})\s*(?:w\b|watts?\b)/i);
   return m ? Number(m[1]) : null;
 }
+
+// charger: "Battery Charger 12V 10A" -> volt 12
+export function detectVolt(name: string): number | null {
+  const m = name.match(/(\d{1,3})\s*(?:v\b|volts?\b)/i);
+  return m ? Number(m[1]) : null;
+}
+
+// charger: "Battery Charger 12V 10A" -> amp 10
+export function detectAmp(name: string): number | null {
+  const m = name.match(/(\d{1,3}(?:\.\d+)?)\s*(?:a\b|amps?\b|amperes?\b)/i);
+  return m ? Number(m[1]) : null;
+}

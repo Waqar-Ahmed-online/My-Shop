@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
   const form = await req.formData();
   const file = form.get("image") as File | null;
   const label = String(form.get("label") ?? "").trim();
-  const group = String(form.get("group") ?? "fan") === "converter" ? "converter" : "fan";
+  const raw = String(form.get("group") ?? "fan");
+  const group = raw === "converter" || raw === "charger" ? raw : "fan";
 
   if (!file || file.size === 0 || !label) {
     return Response.json({ error: "Image aur label zaroori hain" }, { status: 400 });
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   // purane cards (group nahi likha) fan mein ginay jate hain
   const inGroup = await FanCardModel.countDocuments(
-    group === "converter" ? { group: "converter" } : { group: { $ne: "converter" } }
+    group === "fan" ? { group: { $nin: ["converter", "charger"] } } : { group }
   );
   if (inGroup >= MAX_PER_GROUP) {
     return Response.json(

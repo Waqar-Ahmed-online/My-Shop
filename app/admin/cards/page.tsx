@@ -21,7 +21,7 @@ export default function AdminCards() {
     if (res.ok) {
       const all: Row[] = await res.json();
       // converter ke cards yahan nahi, wo "Converters" tab mein hain
-      setCards(all.filter((c) => c.group !== "converter"));
+           setCards(all.filter((c) => !c.group || c.group === "fan"));
     }
   }
 

@@ -11,7 +11,7 @@ type Row = {
   price: number | null;
   oldPrice: number | null;
   category: string;
-    fanType?: string;
+  fanType?: string;
   sizes: string[];
   inStock: boolean;
   colors: ColorRow[];
@@ -22,8 +22,8 @@ type Pending = {
   preview: string;
   name: string;
   hex: string;
-  hex2: string; // khali = single color, bhara = two-tone
-    nameEdited: boolean; // true = naam aap ne haath se likha
+  hex2: string; // empty = single color, filled = two-tone
+  nameEdited: boolean; // true = name was typed manually
 };
 
 const empty = { category: "", fanType: "", name: "", price: "", oldPrice: "", sizes: "", inStock: "1" };
@@ -38,7 +38,7 @@ const smallBtn =
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const validHex = (h: string) => (HEX.test(h) ? h : "#cccccc");
-/* ---------- rang se naam banana ---------- */
+/* ---------- generate name from color ---------- */
 
 const COLOR_NAMES: [string, string][] = [
   ["White", "#f5f5f3"],
@@ -82,7 +82,7 @@ function hexToLab(hex: string): [number, number, number] {
 
 const PALETTE = COLOR_NAMES.map(([name, hex]) => ({ name, lab: hexToLab(hex) }));
 
-// sab se qareeb rang ka naam
+// name of the nearest color
 function nearestColorName(hex: string): string {
   const lab = hexToLab(validHex(hex));
   let best = PALETTE[0];
@@ -105,7 +105,7 @@ function autoName(hex: string, hex2?: string): string {
   const b = nearestColorName(hex2);
   return a === b ? a : `${a} & ${b}`;
 }
-// single ya two-tone (diagonal) swatch ki style
+// style for a single or two-tone (diagonal) swatch
 const swatchStyle = (hex: string, hex2?: string): React.CSSProperties =>
   hex2 && HEX.test(hex2)
     ? { background: `linear-gradient(135deg, ${validHex(hex)} 50%, ${hex2} 50%)` }
@@ -114,23 +114,23 @@ const swatchStyle = (hex: string, hex2?: string): React.CSSProperties =>
 // "cream_K-78.png" -> "cream K-78"
 
 
-// screen par kahin se bhi rang uthao (Chrome / Edge)
+// pick a color from anywhere on the screen (Chrome / Edge)
 type EyeDropperCtor = new () => { open: () => Promise<{ sRGBHex: string }> };
 async function eyedrop(): Promise<string | null> {
   const ED = (window as unknown as { EyeDropper?: EyeDropperCtor }).EyeDropper;
   if (!ED) {
-    alert("Ye browser eyedropper support nahi karta. Chrome ya Edge use karo.");
+    alert("This browser does not support the eyedropper tool. Please use Chrome or Edge.");
     return null;
   }
   try {
     const r = await new ED().open();
     return r.sRGBHex;
   } catch {
-    return null; // Esc dabaya
+    return null; // Esc pressed
   }
 }
 
-// image se andaza (sirf shuruaati rang, asli rang eyedropper se lo)
+// estimate from image (initial color only, use the eyedropper for the exact color)
 async function pickColor(file: File): Promise<string> {
   try {
     const bmp = await createImageBitmap(file);
@@ -187,7 +187,7 @@ function revokeAll(rows: Pending[]) {
   rows.forEach((r) => URL.revokeObjectURL(r.preview));
 }
 
-// colors ek ek karke upload (ek saath nahi, warna database save mein clash hota hai)
+// upload colors one by one (not in parallel, otherwise saves clash in the database)
 async function uploadColors(
   modelId: string,
   rows: Pending[],
@@ -229,10 +229,10 @@ function ColorQueue({
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const el = e.target;
     const files = Array.from(el.files ?? []);
-    el.value = ""; // dobara aur images bhi add ho saken
+    el.value = ""; // so more images can be added again
     if (files.length === 0) return;
 
-       const added: Pending[] = await Promise.all(
+    const added: Pending[] = await Promise.all(
       files.map(async (file) => {
         const hex = await pickColor(file);
         return {
@@ -249,12 +249,12 @@ function ColorQueue({
     setRows((r) => [...r, ...added]);
   }
 
-   function update(id: string, patch: Partial<Pending>) {
+  function update(id: string, patch: Partial<Pending>) {
     setRows((r) =>
       r.map((x) => {
         if (x.id !== id) return x;
         const next = { ...x, ...patch };
-        // rang badalne par naam khud badle (agar aap ne naam haath se na likha ho)
+        // auto-update the name when the color changes (if the name wasn't typed manually)
         if (!next.nameEdited && ("hex" in patch || "hex2" in patch)) {
           next.name = autoName(next.hex, next.hex2);
         }
@@ -295,10 +295,10 @@ function ColorQueue({
             <img src={r.preview} alt="" className="h-12 w-12 shrink-0 bg-white object-contain" />
             <input
               value={r.name}
-                            onChange={(e) =>
+              onChange={(e) =>
                 update(r.id, { name: e.target.value, nameEdited: e.target.value.trim() !== "" })
               }
-              placeholder="Color ka naam"
+              placeholder="Color name"
               disabled={disabled}
               className={`${input} min-w-32 flex-1`}
             />
@@ -307,7 +307,7 @@ function ColorQueue({
               onClick={() => remove(r.id)}
               disabled={disabled}
               className="px-1 text-sm text-red-500"
-              aria-label="Hata do"
+              aria-label="Remove"
             >
               ✕
             </button>
@@ -360,7 +360,7 @@ function ColorQueue({
                   onClick={() => update(r.id, { hex2: "" })}
                   className="text-red-500"
                 >
-                  2nd hata do
+                  Remove 2nd
                 </button>
               </>
             ) : (
@@ -379,17 +379,15 @@ function ColorQueue({
 
       {rows.length > 0 && (
         <p className="text-xs text-neutral-400">
-          {rows.length} color(s) tayyar. Rang theek karne ke liye Eyedropper dabao aur screen se
-          rang uthao (SK ki site ko side-by-side khol lo).
+          {rows.length} color(s) ready. To adjust colors, click Eyedropper
+          and pick a color from the screen (open the SK website side by side).
         </p>
       )}
     </div>
   );
 }
 
-/* ---------- existing model ke colors ---------- */
-
-/* ---------- ek color ko edit karna ---------- */
+/* ---------- edit a single color ---------- */
 
 function ColorEditor({
   modelId,
@@ -417,7 +415,7 @@ function ColorEditor({
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Color ka naam likho");
+      setError("Please enter a color name");
       return;
     }
     setSaving(true);
@@ -437,7 +435,7 @@ function ColorEditor({
     if (res.ok) {
       onDone(true);
     } else {
-      setError((await res.json()).error ?? "Save nahi hua");
+      setError((await res.json()).error ?? "Failed to save");
       setSaving(false);
     }
   }
@@ -453,7 +451,7 @@ function ColorEditor({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Color ka naam"
+          placeholder="Color name"
           disabled={saving}
           className={`${input} min-w-32 flex-1`}
         />
@@ -496,7 +494,7 @@ function ColorEditor({
               onClick={() => setHex2("")}
               className="text-red-500"
             >
-              2nd hata do
+              Remove 2nd
             </button>
           </>
         ) : (
@@ -520,7 +518,7 @@ function ColorEditor({
           className={input}
         />
         <p className="mt-1 text-xs text-neutral-400">
-          Image badalni ho tabhi choose karo, warna purani rahegi.
+          Only select a new image if you want to replace the existing one; otherwise, the previous image will remain.
         </p>
       </div>
 
@@ -546,7 +544,7 @@ function ColorEditor({
   );
 }
 
-/* ---------- existing model ke colors ---------- */
+/* ---------- existing model's colors ---------- */
 
 function Colors({ model, onChange }: { model: Row; onChange: () => void }) {
   const [rows, setRows] = useState<Pending[]>([]);
@@ -558,7 +556,7 @@ function Colors({ model, onChange }: { model: Row; onChange: () => void }) {
   async function addAll() {
     if (rows.length === 0) return;
     if (rows.some((r) => !r.name.trim())) {
-      setError("Har color ka naam likho");
+      setError("Enter a name for every color");
       return;
     }
     setLoading(true);
@@ -572,7 +570,7 @@ function Colors({ model, onChange }: { model: Row; onChange: () => void }) {
     revokeAll(rows.filter((r) => !failedIds.has(r.id)));
     setRows(failed);
     if (failed.length) {
-      setError(`Ye colors upload nahi hue: ${failed.map((f) => f.name).join(", ")}. Dobara try karo.`);
+      setError(`These colors failed to upload: ${failed.map((f) => f.name).join(", ")}. Please try again.`);
     }
     setProgress("");
     setLoading(false);
@@ -580,7 +578,7 @@ function Colors({ model, onChange }: { model: Row; onChange: () => void }) {
   }
 
   async function del(colorId: string) {
-    if (!confirm("Ye color delete karna hai?")) return;
+    if (!confirm("Are you sure you want to delete this color?")) return;
     await fetch(`/api/admin/models/${model._id}/colors/${colorId}`, { method: "DELETE" });
     onChange();
   }
@@ -622,7 +620,7 @@ function Colors({ model, onChange }: { model: Row; onChange: () => void }) {
       )}
 
       <div className="space-y-2">
-        <p className="text-xs text-neutral-400">Naye colors add karo (ek ya bohat saari images ek saath):</p>
+        <p className="text-xs text-neutral-400">Add new colors (one or multiple images at once):</p>
         <ColorQueue rows={rows} setRows={setRows} disabled={loading} />
         {rows.length > 0 && (
           <button
@@ -631,7 +629,7 @@ function Colors({ model, onChange }: { model: Row; onChange: () => void }) {
             disabled={loading}
             className="bg-brand px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
           >
-            {loading ? `Upload ho raha hai ${progress}` : `Add ${rows.length} Color(s)`}
+            {loading ? `Uploading ${progress}` : `Add ${rows.length} Color(s)`}
           </button>
         )}
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -657,12 +655,12 @@ export default function AdminModels() {
       fetch("/api/admin/cards"),
       fetch("/api/admin/models"),
     ]);
-    // converter ke cards/models yahan nahi, wo "Converters" tab mein hain
+    // converter cards/models are not here, they are in the "Converters" tab
     const allCards: Card[] = c.ok ? await c.json() : [];
     const convSlugs = new Set(
-            allCards.filter((x) => x.group && x.group !== "fan").map((x) => x.href.replace(/^\//, ""))
+      allCards.filter((x) => x.group && x.group !== "fan").map((x) => x.href.replace(/^\//, ""))
     );
-        setCards(allCards.filter((x) => !x.group || x.group === "fan"));
+    setCards(allCards.filter((x) => !x.group || x.group === "fan"));
     if (m.ok) {
       const data: Row[] = await m.json();
       setModels(
@@ -691,7 +689,7 @@ export default function AdminModels() {
     setEditingId(m._id);
     setValues({
       category: m.category,
-            fanType: m.fanType ?? "",
+      fanType: m.fanType ?? "",
       name: m.name,
       price: m.price?.toString() ?? "",
       oldPrice: m.oldPrice?.toString() ?? "",
@@ -707,7 +705,7 @@ export default function AdminModels() {
 
   function reset() {
     setEditingId(null);
-       setValues((v) => ({ ...empty, category: v.category, fanType: v.fanType }));
+    setValues((v) => ({ ...empty, category: v.category, fanType: v.fanType }));
     setFileKey((k) => k + 1);
     setError("");
   }
@@ -717,7 +715,7 @@ export default function AdminModels() {
     setError("");
 
     if (!editingId && pending.some((r) => !r.name.trim())) {
-      setError("Har color ka naam likho");
+      setError("Please enter a name for each color");
       return;
     }
 
@@ -729,7 +727,7 @@ export default function AdminModels() {
     );
 
     if (!res.ok) {
-      setError((await res.json()).error ?? "Save nahi hua");
+      setError((await res.json()).error ?? "Failed to save");
       setLoading(false);
       return;
     }
@@ -750,14 +748,14 @@ export default function AdminModels() {
     await load();
     if (failedNames.length) {
       setError(
-        `Model add ho gaya, lekin ye colors upload nahi hue: ${failedNames.join(", ")}. Model ki row se dobara add karo.`
+        `Model was added, but these colors failed to upload: ${failedNames.join(", ")}. Please add them again from the model's row.`
       );
     }
     setLoading(false);
   }
 
   async function remove(id: string) {
-    if (!confirm("Ye model (aur uske sab colors) delete karne hain?")) return;
+    if (!confirm("Delete this model (and all its colors)?")) return;
     await fetch(`/api/admin/models/${id}`, { method: "DELETE" });
     if (editingId === id) reset();
     await load();
@@ -769,7 +767,7 @@ export default function AdminModels() {
 
       <form onSubmit={onSubmit} className="mb-8 space-y-3 border border-neutral-800 p-4">
         <p className="text-sm font-semibold text-brand">
-          {editingId ? "Model edit karo" : "Naya model add karo"}
+          {editingId ? "Edit model" : "Add new model"}
         </p>
 
         <select
@@ -779,7 +777,7 @@ export default function AdminModels() {
           required
           className={input}
         >
-          <option value="">Category chuno (SK, Khurshid...)</option>
+          <option value="">Select category (SK, Khurshid...)</option>
           {options.map((o) => (
             <option key={o.slug} value={o.slug}>
               {o.label}
@@ -788,7 +786,7 @@ export default function AdminModels() {
         </select>
 
         <select name="fanType" value={values.fanType} onChange={change} className={input}>
-          <option value="">Auto (naam se pehchane)</option>
+          <option value="">Auto (detect from name)</option>
           {FAN_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
@@ -807,8 +805,8 @@ export default function AdminModels() {
           />
           <p className="mt-1 text-xs text-neutral-400">
             {editingId
-              ? "Image badalni ho tabhi choose karo, warna purani rahegi."
-              : "Ye main image hai (list me dikhegi)."}
+              ? "Only choose an image if you want to replace it; otherwise the old one stays."
+              : "This is the main image (shown in the list)."}
           </p>
         </div>
 
@@ -816,7 +814,7 @@ export default function AdminModels() {
           name="name"
           value={values.name}
           onChange={change}
-          placeholder="Model ka naam (e.g. Super Deluxe)"
+          placeholder="Model name (e.g. Super Deluxe)"
           required
           className={input}
         />
@@ -827,7 +825,7 @@ export default function AdminModels() {
             min="0"
             value={values.oldPrice}
             onChange={change}
-            placeholder="Purani price (kati hui)"
+            placeholder="Old price (crossed out)"
             className={input}
           />
           <input
@@ -836,7 +834,7 @@ export default function AdminModels() {
             min="0"
             value={values.price}
             onChange={change}
-            placeholder="Asli price"
+            placeholder="Actual price"
             className={input}
           />
         </div>
@@ -845,7 +843,7 @@ export default function AdminModels() {
             name="sizes"
             value={values.sizes}
             onChange={change}
-            placeholder="Sizes (comma se, e.g. 48, 56)"
+            placeholder="Sizes (comma-separated, e.g. 48, 56)"
             className={input}
           />
           <select name="inStock" value={values.inStock} onChange={change} className={input}>
@@ -857,8 +855,9 @@ export default function AdminModels() {
         {!editingId && (
           <div className="space-y-2 border border-dashed border-neutral-700 p-3">
             <p className="text-xs text-neutral-400">
-              Colors (optional): sab colors ki images ek saath select karo. Naam file ke naam se
-              aata hai, rang Eyedropper se uthao, aur two-tone ke liye &quot;+ 2nd color&quot; dabao.
+              Colors (optional): select the images of all colors at once. The name is
+              auto-generated from the color, pick the color with the Eyedropper, and
+              click &quot;+ 2nd color&quot; for two-tone.
             </p>
             <ColorQueue rows={pending} setRows={setPending} disabled={loading} />
           </div>
@@ -891,7 +890,7 @@ export default function AdminModels() {
         </div>
       </form>
 
-       <div className="space-y-3">
+      <div className="space-y-3">
         {models.map((m) => (
           <div
             key={m._id}
@@ -903,7 +902,7 @@ export default function AdminModels() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={m.image} alt={m.name} className="h-16 w-16 bg-white object-contain" />
               <div className="flex-1">
-                                <p className="text-xs uppercase text-neutral-400">
+                <p className="text-xs uppercase text-neutral-400">
                   {labelOf(m.category)}
                   {` · ${FAN_TYPES.find((t) => t.value === getFanType(m))?.label ?? ""}`}
                 </p>
@@ -927,7 +926,7 @@ export default function AdminModels() {
           </div>
         ))}
         {models.length === 0 && (
-          <p className="text-sm text-neutral-400">Abhi koi model nahi hai.</p>
+          <p className="text-sm text-neutral-400">No models yet.</p>
         )}
       </div>
     </div>

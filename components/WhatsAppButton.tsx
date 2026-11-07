@@ -3,16 +3,16 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-// Apna WhatsApp number yahan likho: mulk ka code ke saath, bina + aur bina 0 ke
-// Misal: 0300 1234567  ->  923001234567
+// Enter your WhatsApp number here: include the country code, without + and without the leading 0
+// Example: 0300 1234567  ->  923001234567
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "923493032515";
-const MESSAGE = "Assalam o Alaikum! Mujhe aap ke products ke baare mein maloomat chahiye.";
+const MESSAGE = "Hello! I would like some information about your products.";
 
 export default function WhatsAppButton() {
   const pathname = usePathname();
   const [showBubble, setShowBubble] = useState(false);
 
-  // thori der baad "Message us" dikhao (agar pehle band na kiya ho)
+  // Show "Message us" after a short delay (unless it was already closed)
   useEffect(() => {
     let dismissed = false;
     try {
@@ -30,7 +30,7 @@ export default function WhatsAppButton() {
     } catch {}
   }
 
-  // admin panel par nahi
+  // Don't show on the admin panel
   if (pathname.startsWith("/admin")) return null;
 
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(MESSAGE)}`;
@@ -50,7 +50,7 @@ export default function WhatsAppButton() {
           <button
             type="button"
             onClick={closeBubble}
-            aria-label="Band karo"
+            aria-label="Close"
             className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-neutral-200 text-neutral-700 shadow hover:bg-neutral-300"
           >
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -64,7 +64,7 @@ export default function WhatsAppButton() {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="WhatsApp par message karo"
+        aria-label="Message us on WhatsApp"
         className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg transition hover:scale-105 hover:shadow-xl"
       >
         <svg viewBox="0 0 24 24" width="30" height="30" fill="white" aria-hidden>

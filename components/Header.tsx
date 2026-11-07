@@ -8,14 +8,14 @@ import Logo from "./Logo";
 import SearchBar from "./SearchBar";
 import CartButton from "./CartButton";
 
-type Active = "home" | "collection";
+type Active = "home" | "collection" | "deals" | "about" | "help";
 
 const links: { label: string; href: string; key?: Active }[] = [
   { label: "Home", href: "/", key: "home" },
   { label: "Collection", href: "/collection", key: "collection" },
-  { label: "Deals", href: "#" },
-  { label: "About Us", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "Deals", href: "/deals", key: "deals" },
+  { label: "About Us", href: "/about", key: "about" },
+  { label: "Help", href: "/help", key: "help" },
 ];
 
 export default function Header({ active = "home" }: { active?: Active }) {
@@ -23,11 +23,11 @@ export default function Header({ active = "home" }: { active?: Active }) {
 
   return (
     <Container className="relative flex items-center justify-between gap-4 py-3">
-         <Link href="/" aria-label="Abrar Store - Home" className="shrink-0">
+      <Link href="/" aria-label="Abrar Store - Home" className="shrink-0">
         <Logo />
       </Link>
 
-      {/* Bari screen (xl) par links seedhe navbar mein */}
+      {/* Large screen (xl): links directly in the navbar */}
       <ul className="hidden items-center gap-8 text-sm font-medium xl:flex">
         {links.map((l) => (
           <li key={l.label} className={l.key === active ? "text-brand" : ""}>
@@ -36,7 +36,7 @@ export default function Header({ active = "home" }: { active?: Active }) {
         ))}
       </ul>
 
-      {/* Tablet/laptop par search seedha navbar mein */}
+      {/* Tablet/laptop: search directly in the navbar */}
       <div className="hidden min-w-0 max-w-[450px] flex-1 sm:block">
         <SearchBar />
       </div>
@@ -46,7 +46,7 @@ export default function Header({ active = "home" }: { active?: Active }) {
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          aria-label={open ? "Menu band karo" : "Menu kholo"}
+          aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           className="xl:hidden"
         >
@@ -54,7 +54,7 @@ export default function Header({ active = "home" }: { active?: Active }) {
         </button>
       </div>
 
-      {/* Menu panel: mobile par search + links, tablet par sirf links */}
+      {/* Menu panel: search + links on mobile, only links on tablet */}
       {open && (
         <div className="absolute inset-x-0 top-full z-40 border-b border-neutral-200 bg-white p-4 text-neutral-900 shadow-lg xl:hidden">
           <div className="sm:hidden">

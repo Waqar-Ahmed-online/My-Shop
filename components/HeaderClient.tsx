@@ -16,7 +16,7 @@ const brandOf = (label: string) => label.replace(/\s*fans?\s*$/i, "").trim() || 
 
 export default function HeaderClient({ cards }: { cards: FanCard[] }) {
   const [open, setOpen] = useState(false); // mobile menu
-  const [colOpen, setColOpen] = useState(false); // mobile mein Collection kholna
+  const [colOpen, setColOpen] = useState(false); // expand Collection on mobile
 
   const brands = cards
     .filter((c) => c.href && c.href !== "#")
@@ -26,7 +26,7 @@ export default function HeaderClient({ cards }: { cards: FanCard[] }) {
     <Container className="relative flex items-center justify-between gap-4 py-3">
       <Logo />
 
-      {/* Bari screen (xl) par links seedhe navbar mein */}
+      {/* Large screen (xl): links directly in the navbar */}
       <ul className="hidden items-center gap-8 text-sm font-medium xl:flex">
         <li className="text-brand">
           <Link href="/">Home</Link>
@@ -63,7 +63,7 @@ export default function HeaderClient({ cards }: { cards: FanCard[] }) {
                   </div>
                 ))}
                 {brands.length === 0 && (
-                  <p className="text-sm font-normal text-neutral-500">Abhi koi brand nahi hai.</p>
+                  <p className="text-sm font-normal text-neutral-500">No brands yet.</p>
                 )}
               </div>
             </div>
@@ -77,7 +77,7 @@ export default function HeaderClient({ cards }: { cards: FanCard[] }) {
         ))}
       </ul>
 
-      {/* Tablet/laptop par search seedha navbar mein */}
+      {/* Tablet/laptop: search directly in the navbar */}
       <div className="hidden min-w-0 max-w-[450px] flex-1 sm:block">
         <SearchBar />
       </div>
@@ -87,7 +87,7 @@ export default function HeaderClient({ cards }: { cards: FanCard[] }) {
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          aria-label={open ? "Menu band karo" : "Menu kholo"}
+          aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           className="xl:hidden"
         >
@@ -95,7 +95,7 @@ export default function HeaderClient({ cards }: { cards: FanCard[] }) {
         </button>
       </div>
 
-      {/* Menu panel: mobile par search + links, tablet par sirf links */}
+      {/* Menu panel: search + links on mobile, only links on tablet */}
       {open && (
         <div className="absolute inset-x-0 top-full z-40 max-h-[75vh] overflow-y-auto border-b border-neutral-200 bg-white p-4 text-neutral-900 shadow-lg xl:hidden">
           <div className="sm:hidden">
@@ -109,7 +109,7 @@ export default function HeaderClient({ cards }: { cards: FanCard[] }) {
               </Link>
             </li>
 
-            {/* Collection (dabane par khulta hai) */}
+            {/* Collection (expands on tap) */}
             <li className="border-b border-neutral-100">
               <button
                 type="button"

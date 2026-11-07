@@ -21,6 +21,8 @@ type Ctx = {
   add: (item: Omit<CartItem, "key">) => void;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
+    ready: boolean;
+  clear: () => void;
   wishlist: string[];
   toggleWish: (id: string) => void;
 };
@@ -75,6 +77,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   function remove(key: string) {
     setItems((prev) => prev.filter((p) => p.key !== key));
   }
+    function clear() {
+    setItems([]);
+  }
 
   function toggleWish(id: string) {
     setWishlist((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -85,7 +90,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, count, total, add, setQty, remove, wishlist, toggleWish }}
+           value={{ items, count, total, add, setQty, remove, clear, ready, wishlist, toggleWish }}
     >
       {children}
     </CartContext.Provider>

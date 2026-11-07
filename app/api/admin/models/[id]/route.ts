@@ -4,7 +4,8 @@ import cloudinary from "@/lib/cloudinary";
 import { connectDB } from "@/lib/mongodb";
 import { checkImage, uploadImage } from "@/lib/upload";
 import FanModelDoc from "@/models/FanModel";
-  import { FAN_TYPES } from "@/lib/fanTypes";
+import { FAN_TYPES } from "@/lib/fanTypes";
+
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PUT(req: NextRequest, { params }: Ctx) {
@@ -14,16 +15,16 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   const category = String(form.get("category") ?? "").trim();
   const priceRaw = String(form.get("price") ?? "").trim();
   const oldRaw = String(form.get("oldPrice") ?? "").trim();
-    const sizes = String(form.get("sizes") ?? "")
+  const sizes = String(form.get("sizes") ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
   const inStock = form.get("inStock") !== "0";
-    const fanTypeRaw = String(form.get("fanType") ?? "");
+  const fanTypeRaw = String(form.get("fanType") ?? "");
   const fanType = FAN_TYPES.some((t) => t.value === fanTypeRaw) ? fanTypeRaw : "";
 
   if (!name || !category) {
-    return Response.json({ error: "Category aur naam zaroori hain" }, { status: 400 });
+    return Response.json({ error: "Category and name are required" }, { status: 400 });
   }
 
   await connectDB();
@@ -33,7 +34,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   const file = form.get("image") as File | null;
   if (file && file.size > 0) {
     const bad = checkImage(file);
-if (bad) return Response.json({ error: bad }, { status: 400 });
+    if (bad) return Response.json({ error: bad }, { status: 400 });
     const uploaded = await uploadImage(file, "abrar-electronics/models");
     await cloudinary.uploader.destroy(doc.publicId);
     doc.image = uploaded.secure_url;
@@ -44,9 +45,9 @@ if (bad) return Response.json({ error: bad }, { status: 400 });
   doc.category = category;
   doc.price = priceRaw ? Number(priceRaw) : null;
   doc.oldPrice = oldRaw ? Number(oldRaw) : null;
-    doc.sizes = sizes;
+  doc.sizes = sizes;
   doc.inStock = inStock;
-    doc.fanType = fanType;
+  doc.fanType = fanType;
   await doc.save();
 
   revalidateTag("fan-models", { expire: 0 });
@@ -59,7 +60,7 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
   const doc = await FanModelDoc.findByIdAndDelete(id);
   if (!doc) return Response.json({ error: "Not found" }, { status: 404 });
 
-  // model aur uske sab colors ki images Cloudinary se hatao
+  // remove the model's image and all its colors' images from Cloudinary
   await cloudinary.uploader.destroy(doc.publicId);
   for (const c of doc.colors) await cloudinary.uploader.destroy(c.publicId);
 

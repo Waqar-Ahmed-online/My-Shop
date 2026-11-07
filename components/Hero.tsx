@@ -14,7 +14,7 @@ export default function Hero({ slides }: { slides: Slide[] }) {
   const next = () => setIndex((i) => (i + 1) % total);
   const prev = () => setIndex((i) => (i - 1 + total) % total);
 
-  // har 5 sec baad agli slide; index badalne par timer dobara shuru hota hai
+  // move to the next slide every 5 seconds; the timer restarts whenever the index changes
   useEffect(() => {
     if (total === 0) return;
     const t = setInterval(() => setIndex((i) => (i + 1) % total), 5000);

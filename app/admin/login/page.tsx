@@ -27,7 +27,7 @@ export default function AdminLogin() {
       router.replace("/admin");
       router.refresh();
     } else {
-      setError((await res.json()).error ?? "Login fail");
+      setError((await res.json()).error ?? "Login failed");
       setLoading(false);
     }
   }

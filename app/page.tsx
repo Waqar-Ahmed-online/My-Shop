@@ -7,11 +7,11 @@ export default async function Home() {
   const [slides, cards] = await Promise.all([getSlides(), getFanCards()]);
 
   const fanCards = cards.filter((c) => !c.group || c.group === "fan");
-  const collectionCards = cards.filter((c) => c.group === "converter" || c.group === "charger");
+  const collectionCards = cards.filter((c) => c.group && c.group !== "fan");
 
   return (
     <>
-      {/* Transparent header: hero ke upar overlay (mobile + desktop dono) */}
+      {/* Transparent header: overlaid on top of the hero (both mobile and desktop) */}
       <header data-overlay className="absolute inset-x-0 top-0 z-30 text-white">
         <Header />
       </header>

@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   const removeMobile = form.get("removeMobile") === "1";
 
   if (!title) {
-    return Response.json({ error: "Title zaroori hai" }, { status: 400 });
+    return Response.json({ error: "Title is required" }, { status: 400 });
   }
   if (desktopFile) {
     const bad = checkImage(desktopFile);
@@ -35,7 +35,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   const slide = await SlideModel.findById(id);
   if (!slide) return Response.json({ error: "Not found" }, { status: 404 });
 
-  // purani images save hone ke baad hatayenge
+  // old images will be removed after saving
   const toDestroy: string[] = [];
 
   if (desktopFile) {
@@ -62,7 +62,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   slide.secondaryBtn = String(form.get("secondaryBtn") || "View Deals");
   await slide.save();
 
-     for (const pid of toDestroy) await cloudinary.uploader.destroy(pid);
+  for (const pid of toDestroy) await cloudinary.uploader.destroy(pid);
 
   revalidateTag("slides", { expire: 0 });
   return Response.json({ ok: true, mobileImage: slide.mobileImage ?? "" });

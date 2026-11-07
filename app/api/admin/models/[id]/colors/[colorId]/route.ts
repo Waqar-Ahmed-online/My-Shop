@@ -16,17 +16,17 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   const hex2Raw = String(form.get("hex2") ?? "");
 
   if (!name) {
-    return Response.json({ error: "Color ka naam zaroori hai" }, { status: 400 });
+    return Response.json({ error: "Color name is required" }, { status: 400 });
   }
 
   await connectDB();
   const doc = await FanModelDoc.findById(id);
-  if (!doc) return Response.json({ error: "Model nahi mila" }, { status: 404 });
+  if (!doc) return Response.json({ error: "Model not found" }, { status: 404 });
 
   const color = doc.colors.id(colorId);
-  if (!color) return Response.json({ error: "Color nahi mila" }, { status: 404 });
+  if (!color) return Response.json({ error: "Color not found" }, { status: 404 });
 
-  // nayi image di ho to pehle upload, save ke baad purani hatao
+  // if a new image is provided, upload it first, then remove the old one after saving
   let oldPublicId: string | null = null;
   const file = form.get("image") as File | null;
   if (file && file.size > 0) {
@@ -54,10 +54,10 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
 
   await connectDB();
   const doc = await FanModelDoc.findById(id);
-  if (!doc) return Response.json({ error: "Model nahi mila" }, { status: 404 });
+  if (!doc) return Response.json({ error: "Model not found" }, { status: 404 });
 
   const color = doc.colors.id(colorId);
-  if (!color) return Response.json({ error: "Color nahi mila" }, { status: 404 });
+  if (!color) return Response.json({ error: "Color not found" }, { status: 404 });
 
   await cloudinary.uploader.destroy(color.publicId);
   doc.colors.pull({ _id: colorId });

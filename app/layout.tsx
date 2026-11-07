@@ -4,6 +4,7 @@ import { CartProvider } from "@/lib/cart";
 import "./globals.css";
 import { Suspense } from "react";
 import WhatsAppButton from "@/components/WhatsAppButton";
+
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${poppins.variable} ${cormorant.variable} h-full antialiased`}
     >
-            <body className="min-h-full font-sans">
+      <body className="min-h-full font-sans">
         <CartProvider>{children}</CartProvider>
         <Suspense fallback={null}>
           <WhatsAppButton />

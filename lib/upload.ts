@@ -12,7 +12,7 @@ export async function uploadImage(file: File, folder: string) {
   });
 }
 export function checkImage(file: File) {
-  if (!file.type.startsWith("image/")) return "Sirf image file upload karo";
-  if (file.size > 4 * 1024 * 1024) return "Image 4MB se choti honi chahiye";
+  if (!file.type.startsWith("image/")) return "Only image files can be uploaded";
+  if (file.size > 4 * 1024 * 1024) return "Image must be smaller than 4MB";
   return null;
 }

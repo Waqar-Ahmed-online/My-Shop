@@ -25,14 +25,22 @@ export function detectWatt(name: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-// charger: "Battery Charger 12V 10A" -> volt 12
-export function detectVolt(name: string): number | null {
-  const m = name.match(/(\d{1,3})\s*(?:v\b|volts?\b)/i);
-  return m ? Number(m[1]) : null;
+// "12V", "12 Volt", "12V/24V", "12/24V", "12-24V"  ->  [12, 24]
+const VOLT_RE =
+  /((?:\d{1,3}(?:\.\d+)?\s*[/,&-]\s*)*\d{1,3}(?:\.\d+)?)\s*(?:v\b|volts?\b)/gi;
+// "10A", "10 Amp", "10/20A"  ->  [10, 20]   (Ah / AC jaisi cheezein nahi pakadta)
+const AMP_RE =
+  /((?:\d{1,3}(?:\.\d+)?\s*[/,&-]\s*)*\d{1,3}(?:\.\d+)?)\s*(?:a\b|amps?\b|amperes?\b)/gi;
+
+function numbersFrom(name: string, re: RegExp): number[] {
+  const out = new Set<number>();
+  for (const m of name.matchAll(re)) {
+    for (const n of m[1].split(/[^\d.]+/)) {
+      if (n) out.add(Number(n));
+    }
+  }
+  return Array.from(out);
 }
 
-// charger: "Battery Charger 12V 10A" -> amp 10
-export function detectAmp(name: string): number | null {
-  const m = name.match(/(\d{1,3}(?:\.\d+)?)\s*(?:a\b|amps?\b|amperes?\b)/i);
-  return m ? Number(m[1]) : null;
-}
+export const detectVolts = (name: string) => numbersFrom(name, VOLT_RE);
+export const detectAmps = (name: string) => numbersFrom(name, AMP_RE);

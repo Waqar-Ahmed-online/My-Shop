@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
   const title = String(form.get("title") ?? "").trim();
 
   if (!file || file.size === 0 || !title) {
-    return Response.json({ error: "Laptop image aur title zaroori hain" }, { status: 400 });
+    return Response.json({ error: "Laptop image and title are required" }, { status: 400 });
   }
 
-  // upload se pehle dono check karo
+  // check both images before uploading
   const bad = checkImage(file);
   if (bad) return Response.json({ error: `Laptop image: ${bad}` }, { status: 400 });
   if (mobileFile) {

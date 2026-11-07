@@ -18,7 +18,7 @@ export default function AdminSlides() {
   const [slides, setSlides] = useState<Row[]>([]);
   const [values, setValues] = useState(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [fileKey, setFileKey] = useState(0); // file inputs reset karne ke liye
+  const [fileKey, setFileKey] = useState(0); // to reset file inputs
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -74,7 +74,7 @@ export default function AdminSlides() {
 
     if (!res.ok) {
       const j = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(j.error ?? "Save nahi hua");
+      setError(j.error ?? "Failed to save");
       setLoading(false);
       return;
     }
@@ -82,10 +82,10 @@ export default function AdminSlides() {
     const data = (await res.json().catch(() => ({}))) as { mobileImage?: string };
     await load();
 
-    // mobile image bheji thi lekin database mein save nahi hui
+    // mobile image was sent but not saved in the database
     if (sentMobile && !data.mobileImage) {
       setError(
-        "Slide save hui, lekin mobile image database mein save nahi hui. Dev server band karo (Ctrl + C), dobara npm run dev chalao, phir Edit se mobile image dobara upload karo."
+        "Slide was saved, but the mobile image was not saved in the database. Stop the dev server (Ctrl + C), run npm run dev again, then re-upload the mobile image using Edit."
       );
       setLoading(false);
       return;
@@ -93,15 +93,15 @@ export default function AdminSlides() {
 
     setNotice(
       sentMobile
-        ? "Save ho gayi ✓ Laptop aur mobile dono image upload hain."
-        : "Slide save ho gayi ✓"
+        ? "Saved ✓ Both laptop and mobile images are uploaded."
+        : "Slide saved ✓"
     );
     reset();
     setLoading(false);
   }
 
   async function remove(id: string) {
-    if (!confirm("Ye slide delete karni hai?")) return;
+    if (!confirm("Do you want to delete this slide?")) return;
     await fetch(`/api/admin/slides/${id}`, { method: "DELETE" });
     if (editingId === id) reset();
     await load();
@@ -125,11 +125,11 @@ export default function AdminSlides() {
 
       <form onSubmit={onSubmit} className="mb-8 space-y-3 border border-neutral-800 p-4">
         <p className="text-sm font-semibold text-brand">
-          {editingId ? "Slide edit karo" : "Nayi slide add karo"}
+          {editingId ? "Edit slide" : "Add new slide"}
         </p>
 
         <div>
-          <label className={label}>Laptop / Desktop image (1920 × 1080, chaori)</label>
+          <label className={label}>Laptop / Desktop image (1920 × 1080, wide)</label>
           <input
             key={`d${fileKey}`}
             type="file"
@@ -140,13 +140,13 @@ export default function AdminSlides() {
           />
           {editingId && (
             <p className="mt-1 text-xs text-neutral-400">
-              Image badalni ho tabhi choose karo, warna purani rahegi.
+              Only choose an image if you want to replace it; otherwise the old one stays.
             </p>
           )}
         </div>
 
         <div>
-          <label className={label}>Mobile image (1080 × 1920, lambi) — optional</label>
+          <label className={label}>Mobile image (1080 × 1920, tall) — optional</label>
           <input
             key={`m${fileKey}`}
             type="file"
@@ -155,7 +155,7 @@ export default function AdminSlides() {
             className={input}
           />
           <p className="mt-1 text-xs text-neutral-400">
-            Na do to mobile par bhi laptop wali image hi dikhegi.
+            If you don't add one, the laptop image will be shown on mobile too.
           </p>
           {editingId && editingMobile && (
             <label
@@ -163,7 +163,7 @@ export default function AdminSlides() {
               className="mt-2 flex items-center gap-2 text-xs text-neutral-300"
             >
               <input type="checkbox" name="removeMobile" value="1" />
-              Mobile image hata do (laptop wali hi chalegi)
+              Remove mobile image (the laptop image will be used)
             </label>
           )}
         </div>
@@ -241,7 +241,7 @@ export default function AdminSlides() {
                   <img src={s.mobileImage} alt={`${s.title} mobile`} className="h-16 w-9 object-cover" />
                 ) : (
                   <div className="flex h-16 w-9 items-center justify-center border border-dashed border-neutral-700 text-[9px] text-neutral-500">
-                    nahi
+                    none
                   </div>
                 )}
                 <p className="mt-1 text-[10px] uppercase text-neutral-500">Mobile</p>
@@ -252,10 +252,10 @@ export default function AdminSlides() {
               <p className="text-xs uppercase text-neutral-400">{s.eyebrow}</p>
               <p className="font-semibold">{s.title}</p>
               {s.mobileImage ? (
-                <p className="mt-1 text-xs text-green-400">✓ Mobile image upload hai</p>
+                <p className="mt-1 text-xs text-green-400">✓ Mobile image uploaded</p>
               ) : (
                 <p className="mt-1 text-xs text-amber-400">
-                  Mobile image nahi hai (mobile par laptop wali chalegi)
+                  No mobile image (the laptop image will be used on mobile)
                 </p>
               )}
             </div>
@@ -268,7 +268,7 @@ export default function AdminSlides() {
           </div>
         ))}
         {slides.length === 0 && (
-          <p className="text-sm text-neutral-400">Abhi koi slide nahi hai.</p>
+          <p className="text-sm text-neutral-400">No slides yet.</p>
         )}
       </div>
     </div>

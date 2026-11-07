@@ -11,7 +11,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   const { id } = await params;
   const form = await req.formData();
   const label = String(form.get("label") ?? "").trim();
-  if (!label) return Response.json({ error: "Label zaroori hai" }, { status: 400 });
+  if (!label) return Response.json({ error: "Label is required" }, { status: 400 });
 
   await connectDB();
   const card = await FanCardModel.findById(id);
@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   const file = form.get("image") as File | null;
   if (file && file.size > 0) {
     const bad = checkImage(file);
-if (bad) return Response.json({ error: bad }, { status: 400 });
+    if (bad) return Response.json({ error: bad }, { status: 400 });
     const uploaded = await uploadImage(file, "abrar-electronics/cards");
     await cloudinary.uploader.destroy(card.publicId);
     card.image = uploaded.secure_url;
@@ -29,8 +29,8 @@ if (bad) return Response.json({ error: bad }, { status: 400 });
 
   card.label = label;
   card.href = String(form.get("href") || "#");
-     const g = String(form.get("group") ?? "fan");
-  card.group = g === "converter" || g === "charger" ? g : "fan";
+  const g = String(form.get("group") ?? "fan");
+  card.group = ["converter", "charger", "solar"].includes(g) ? g : "fan";
   await card.save();
 
   revalidateTag("fan-cards", { expire: 0 });

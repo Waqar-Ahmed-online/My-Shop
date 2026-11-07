@@ -16,7 +16,7 @@ export default function HeroSlide({ slide, active, priority }: Props) {
   let background: React.ReactNode;
 
   if (slide.mobileImage) {
-    // 768px se upar laptop/tablet wali image, neeche mobile wali
+    // laptop/tablet image above 768px, mobile image below
     const {
       props: { srcSet: desktopSet },
     } = getImageProps({ ...common, src: slide.image });
@@ -41,7 +41,7 @@ export default function HeroSlide({ slide, active, priority }: Props) {
       className={`absolute inset-0 transition-opacity duration-1000 ${active ? "opacity-100" : "opacity-0"}`}
     >
       {background}
-      {/* upar thora dark taake transparent header ke white icons/logo saaf dikhein */}
+      {/* slightly dark at the top so the transparent header's white icons/logo stay clearly visible */}
       <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/25 to-black/50" />
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-5 pb-16 pt-24 text-center sm:px-6 sm:pb-0 sm:pt-20">

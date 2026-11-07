@@ -18,14 +18,14 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   const hex2 = HEX.test(hex2Raw) ? hex2Raw : "";
 
   if (!file || file.size === 0 || !name) {
-    return Response.json({ error: "Color ka naam aur image zaroori hain" }, { status: 400 });
+    return Response.json({ error: "Color name and image are required" }, { status: 400 });
   }
   const bad = checkImage(file);
   if (bad) return Response.json({ error: bad }, { status: 400 });
 
   await connectDB();
   const doc = await FanModelDoc.findById(id);
-  if (!doc) return Response.json({ error: "Model nahi mila" }, { status: 404 });
+  if (!doc) return Response.json({ error: "Model not found" }, { status: 404 });
 
   const uploaded = await uploadImage(file, "abrar-electronics/colors");
   doc.colors.push({

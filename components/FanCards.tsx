@@ -13,15 +13,15 @@ export default function FanCards({
   cards: FanCard[];
   eyebrow?: string;
   title: string;
-  bg?: string; // background image ka path
-  light?: boolean; // true = safed background aur kali heading
+  bg?: string; // path of the background image
+  light?: boolean; // true = white background and black heading
 }) {
   if (cards.length === 0) return null;
 
   return (
     <section
-            className={`relative isolate px-4 py-14 sm:px-6 ${
-        light ? "bg-linear-to-b from-[#f4e7cc] via-[#faf3e3] to-[#efe0c0]" : ""
+      className={`relative isolate px-4 py-14 sm:px-6 ${
+        light ? "bg-white" : ""
       }`}
     >
       {!light &&
@@ -46,14 +46,14 @@ export default function FanCards({
         )}
         <h2
           className={`text-center font-display text-4xl font-semibold uppercase tracking-wide sm:text-5xl ${
-                       light ? "text-[#3a2a1a]" : "text-white drop-shadow-sm"
+            light ? "text-neutral-900" : "text-white drop-shadow-sm"
           } ${eyebrow ? "mt-2" : ""}`}
         >
           {title}
         </h2>
-                {light && <div className="mx-auto mt-4 h-0.5 w-16 bg-brand" />}
+        {light && <div className="mx-auto mt-4 h-0.5 w-16 bg-brand" />}
 
-        {/* -mx-2.5 aur p-2.5 se cards ke beech 20px ka gap banta hai */}
+        {/* -mx-2.5 and p-2.5 create a 20px gap between the cards */}
         <div className="-mx-2.5 mt-10 flex flex-wrap justify-center">
           {cards.map((c) => (
             <div key={c.id} className="w-full max-w-md p-2.5 md:w-1/3 md:max-w-none">

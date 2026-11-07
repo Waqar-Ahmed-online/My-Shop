@@ -9,7 +9,7 @@ export default function AdminChargers() {
       defaultLabel="Battery Charger"
       defaultHref="/charger-categories"
       nameExample="Battery Charger 12V 10A"
-      nameHint="Har volt aur amp ka alag model banao (jaise 12V 10A, 12V 20A, 24V 10A). Naam mein volt aur amp dono zaroor likho (12V, 10A), filter inhi se banta hai."
+     nameHint="Create a separate model for each voltage and amperage combination (e.g., 12V 10A, 12V 20A, 24V 10A). Always include both voltage and amperage in the name (12V, 10A), as the filters are generated using these values."
     />
   );
 }

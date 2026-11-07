@@ -5,17 +5,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
 import type { FanModel } from "@/types";
-import { FAN_TYPES, detectAmp, detectVolt, detectWatt, getFanType } from "@/lib/fanTypes";
+import { FAN_TYPES, detectAmps, detectVolts, detectWatt, getFanType } from "@/lib/fanTypes";
 import { rs } from "@/lib/format";
 
 type Sort = "default" | "low" | "high";
 
+const isVoltAmp = (group: string) => group === "charger" || group === "solar";
+
 // filter ki value (t) is model par lagti hai ya nahi
 function matches(m: FanModel, t: string, group: string) {
   if (t === "all") return true;
-  if (group === "charger") {
-    if (t.startsWith("v")) return detectVolt(m.name) === Number(t.slice(1));
-    if (t.startsWith("a")) return detectAmp(m.name) === Number(t.slice(1));
+  if (isVoltAmp(group)) {
+    if (t.startsWith("v")) return detectVolts(m.name).includes(Number(t.slice(1)));
+    if (t.startsWith("a")) return detectAmps(m.name).includes(Number(t.slice(1)));
     return true;
   }
   if (group === "converter") return detectWatt(m.name) === Number(t);
@@ -59,19 +61,28 @@ export default function CategoryView({
   models: FanModel[];
   group?: string;
 }) {
-  const isConverter = group === "converter"; // converter ki photos lambi hoti hain
+  // photo ka dabba: converter lambi (3:4), charger/solar chaori (4:3), pankhe choras
+  const frame =
+    group === "converter"
+      ? "aspect-3/4"
+      : isVoltAmp(group)
+        ? "aspect-4/3"
+        : "aspect-square";
+  // pankhe ke ilawa har section mein photo poora dabba bhare (koi safed patti nahi)
+  const fillPhoto = group !== "fan";
+
   const [type, setType] = useState<string>("all");
   const [sort, setSort] = useState<Sort>("default");
   const [open, setOpen] = useState(false); // mobile filter panel
 
   let extra: { value: string; label: string }[];
-  if (group === "charger") {
+  if (isVoltAmp(group)) {
     extra = [
-      ...uniqSorted(models.map((m) => detectVolt(m.name))).map((v) => ({
+      ...uniqSorted(models.flatMap((m) => detectVolts(m.name))).map((v) => ({
         value: `v${v}`,
         label: `${v}V`,
       })),
-      ...uniqSorted(models.map((m) => detectAmp(m.name))).map((a) => ({
+      ...uniqSorted(models.flatMap((m) => detectAmps(m.name))).map((a) => ({
         value: `a${a}`,
         label: `${a}A`,
       })),
@@ -218,10 +229,8 @@ export default function CategoryView({
                 href={`/${category}/${m.id}`}
                 className="group flex flex-col overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
-                {/* photo */}
-                <div
-                  className={`relative bg-white ${isConverter ? "aspect-3/4" : "aspect-square"}`}
-                >
+                {/* photo: sab cards ka dabba barabar, photo poora bharti hai */}
+                <div className={`relative overflow-hidden bg-white ${frame}`}>
                   {discount > 0 && m.inStock && (
                     <span className="absolute left-3 top-3 z-10 rounded bg-red-600 px-2 py-1 text-xs font-bold text-white">
                       -{discount}%
@@ -240,7 +249,7 @@ export default function CategoryView({
                     priority={i < 3}
                     sizes="(min-width: 1024px) 33vw, 100vw"
                     className={`${
-                      isConverter ? "object-cover" : "object-contain p-3"
+                      fillPhoto ? "object-cover object-center" : "object-contain p-3"
                     } transition duration-500 group-hover:scale-105 ${
                       m.inStock ? "" : "opacity-50"
                     }`}
@@ -273,20 +282,22 @@ export default function CategoryView({
                     </div>
                   )}
 
-                  <div className="mt-3 flex flex-wrap items-baseline gap-x-2">
-                    {m.price !== null && (
-                      <span className="text-lg font-bold text-neutral-900">{rs(m.price)}</span>
-                    )}
-                    {m.oldPrice !== null && (
-                      <span className="text-sm text-neutral-400 line-through">
-                        {rs(m.oldPrice)}
-                      </span>
-                    )}
-                  </div>
+                  <div className="mt-auto pt-3">
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      {m.price !== null && (
+                        <span className="text-lg font-bold text-neutral-900">{rs(m.price)}</span>
+                      )}
+                      {m.oldPrice !== null && (
+                        <span className="text-sm text-neutral-400 line-through">
+                          {rs(m.oldPrice)}
+                        </span>
+                      )}
+                    </div>
 
-                  <span className="mt-4 block rounded bg-brand py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-black transition group-hover:bg-neutral-900 group-hover:text-white">
-                    View Details
-                  </span>
+                    <span className="mt-4 block rounded bg-brand py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-black transition group-hover:bg-neutral-900 group-hover:text-white">
+                      View Details
+                    </span>
+                  </div>
                 </div>
               </Link>
             );

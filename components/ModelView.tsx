@@ -8,11 +8,11 @@ import type { FanModel } from "@/types";
 import { rs } from "@/lib/format";
 import { useCart } from "@/lib/cart";
 
-type Props = { model: FanModel; category: { label: string; href: string } };
+type Props = { model: FanModel; category: { label: string; href: string }; group?: string };
 
 const dashed = "border-t border-dashed border-neutral-300";
 
-export default function ModelView({ model, category }: Props) {
+export default function ModelView({ model, category, group = "fan" }: Props) {
   const { add, wishlist, toggleWish } = useCart();
   const [i, setI] = useState(0);
   const [size, setSize] = useState(model.sizes[0] ?? "");
@@ -55,7 +55,7 @@ export default function ModelView({ model, category }: Props) {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch { }
+    } catch {}
   }
 
   const shareBtn =
@@ -72,7 +72,9 @@ export default function ModelView({ model, category }: Props) {
           priority
           quality={90}
           sizes="(min-width: 768px) 50vw, 100vw"
-          className="object-contain p-6"
+          className={
+            group === "fan" ? "object-contain p-6" : "object-cover object-[center_35%]"
+          }
         />
       </div>
 
@@ -106,10 +108,11 @@ export default function ModelView({ model, category }: Props) {
                         title={c.name}
                         aria-label={c.name}
                         aria-pressed={active}
-                        className={`h-10 w-10 border-2 p-[3px] transition ${active
+                        className={`h-10 w-10 border-2 p-[3px] transition ${
+                          active
                             ? "border-neutral-900"
                             : "border-neutral-300 hover:border-neutral-500"
-                          }`}
+                        }`}
                       >
                         <span
                           className="flex h-full w-full items-center justify-center"
@@ -147,10 +150,11 @@ export default function ModelView({ model, category }: Props) {
                       type="button"
                       onClick={() => setSize(s)}
                       aria-pressed={s === size}
-                      className={`h-10 min-w-10 border-2 px-3 text-sm transition ${s === size
+                      className={`h-10 min-w-10 border-2 px-3 text-sm transition ${
+                        s === size
                           ? "border-neutral-900 text-neutral-900"
                           : "border-neutral-300 text-neutral-600 hover:border-neutral-500"
-                        }`}
+                      }`}
                     >
                       {s}
                     </button>
@@ -163,8 +167,9 @@ export default function ModelView({ model, category }: Props) {
 
         <div className={`mt-6 pt-6 ${dashed}`}>
           <p
-            className={`text-sm font-semibold ${model.inStock ? "text-green-600" : "text-red-600"
-              }`}
+            className={`text-sm font-semibold ${
+              model.inStock ? "text-green-600" : "text-red-600"
+            }`}
           >
             {model.inStock ? "In stock" : "Out of stock"}
           </p>
@@ -175,7 +180,7 @@ export default function ModelView({ model, category }: Props) {
                 type="button"
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
                 className="flex h-11 w-10 items-center justify-center text-neutral-600 hover:text-black"
-                aria-label="Quantity kam karo"
+                aria-label="Decrease quantity"
               >
                 <Minus size={16} />
               </button>
@@ -184,7 +189,7 @@ export default function ModelView({ model, category }: Props) {
                 type="button"
                 onClick={() => setQty((q) => q + 1)}
                 className="flex h-11 w-10 items-center justify-center text-neutral-600 hover:text-black"
-                aria-label="Quantity barhao"
+                aria-label="Increase quantity"
               >
                 <Plus size={16} />
               </button>
@@ -209,7 +214,7 @@ export default function ModelView({ model, category }: Props) {
               size={20}
               className={liked ? "fill-gold-dark text-gold-dark" : ""}
             />
-            {liked ? "Wishlist me hai" : "Add to wishlist"}
+            {liked ? "In wishlist" : "Add to wishlist"}
           </button>
         </div>
 

@@ -62,13 +62,13 @@ export default function AdminCards() {
       reset();
       await load();
     } else {
-      setError((await res.json()).error ?? "Save nahi hua");
+      setError((await res.json()).error ?? "Failed to save.");
     }
     setLoading(false);
   }
 
   async function remove(id: string) {
-    if (!confirm("Ye card delete karna hai?")) return;
+    if (!confirm("Are you sure you want to delete this card?")) return;
     await fetch(`/api/admin/cards/${id}`, { method: "DELETE" });
     if (editingId === id) reset();
     await load();
@@ -81,13 +81,13 @@ export default function AdminCards() {
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-1 text-2xl font-bold">Ceiling Fan Cards</h1>
       <p className="mb-6 text-sm text-neutral-400">
-        Home page par &quot;Ceiling Fan&quot; section ke cards (SK, Khurshid, Agha). Is mein{" "}
-        {MAX} tak cards ho sakte hain. Converter ke cards alag tab (Converters) mein hain.
+        Cards for the &quot;Ceiling Fan&quot; on the homepage (SK, Khurshid, Agha). You can add up to{" "}
+        {MAX} cards.Converter cards are available in a separate (Converters) tab.
       </p>
 
       <form onSubmit={onSubmit} className="mb-8 space-y-3 border border-neutral-800 p-4">
         <p className="text-sm font-semibold text-brand">
-          {editingId ? "Card edit karo" : "Naya card add karo"}
+          {editingId ? "Edit Card / Add New Card" : "Naya card add karo"}
         </p>
 
         {/* ye page hamesha pankhon ke liye hai */}
@@ -104,8 +104,8 @@ export default function AdminCards() {
           />
           <p className="mt-1 text-xs text-neutral-400">
             {editingId
-              ? "Image badalni ho tabhi choose karo, warna purani rahegi."
-              : "Lambi (portrait) image use karo, jaise 1200 x 1600."}
+              ? "Only select a new image if you want to replace the existing one; otherwise, the previous image will remain./"
+              : "Use a tall ( portrait ) image, such as 1200 × 1600."}
           </p>
         </div>
 
@@ -126,8 +126,7 @@ export default function AdminCards() {
             className={input}
           />
           <p className="mt-1 text-xs text-neutral-400">
-            Link / se shuru, chhote harf aur dash se likho (jaise /sk-fan-categories). Models add
-            karte waqt isi card ko category chunna hota hai.
+           Start the link with / and use lowercase letters separated by hyphens (e.g., /sk-fan-categories). When adding models, you must select this card as the category.
           </p>
         </div>
 
@@ -178,7 +177,7 @@ export default function AdminCards() {
           </div>
         ))}
         {cards.length === 0 && (
-          <p className="text-sm text-neutral-500">Abhi koi card nahi hai.</p>
+          <p className="text-sm text-neutral-500">	No cards available yet.</p>
         )}
       </div>
     </div>

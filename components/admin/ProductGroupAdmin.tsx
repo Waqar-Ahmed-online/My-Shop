@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Group = "converter" | "charger";
+type Group = "converter" | "charger" | "solar";
 
 type Cfg = {
   group: Group;
@@ -27,7 +27,7 @@ type Model = {
 
 const slugOf = (href: string) => href.replace(/^\//, "");
 
-// link hamesha / se shuru, chhote harf, dash se jora hua
+// link always starts with /, lowercase, joined with dashes
 const normalizeHref = (v: string) => {
   let s = v.toLowerCase().replace(/[^a-z0-9/-]/g, "-");
   if (!s.startsWith("/")) s = "/" + s;
@@ -90,17 +90,17 @@ function CardSection({
       reset();
       onChange();
     } else {
-      setError((await res.json()).error ?? "Save nahi hua");
+      setError((await res.json()).error ?? "Failed to save");
     }
     setLoading(false);
   }
 
   async function remove(c: Card) {
     if (models.some((m) => m.category === slugOf(c.href))) {
-      alert("Pehle is card ke models delete karo (neeche Models wale hissay mein).");
+      alert("First delete this card's models (in the Models section below).");
       return;
     }
-    if (!confirm("Ye card delete karna hai?")) return;
+    if (!confirm("Do you want to delete this card?")) return;
     await fetch(`/api/admin/cards/${c._id}`, { method: "DELETE" });
     onChange();
   }
@@ -109,13 +109,13 @@ function CardSection({
     <section className="mb-12">
       <h2 className="mb-1 text-xl font-bold">1. {cfg.noun} card</h2>
       <p className="mb-4 text-sm text-neutral-400">
-        Ye card home page par &quot;Collection&quot; section mein dikhta hai. Isay dabane par{" "}
-        {cfg.noun.toLowerCase()} ka page khulta hai.
+        This card appears in the &quot;Collection&quot; section on the home page. Clicking it opens
+        the {cfg.noun.toLowerCase()} page.
       </p>
 
       <form onSubmit={onSubmit} className="mb-5 space-y-3 border border-neutral-800 p-4">
         <p className="text-sm font-semibold text-brand">
-          {editingId ? "Card edit karo" : `Naya ${cfg.noun.toLowerCase()} card`}
+          {editingId ? "Edit card" : `New ${cfg.noun.toLowerCase()} card`}
         </p>
 
         <input type="hidden" name="group" value={cfg.group} />
@@ -131,8 +131,8 @@ function CardSection({
           />
           <p className="mt-1 text-xs text-neutral-400">
             {editingId
-              ? "Image badalni ho tabhi choose karo, warna purani rahegi."
-              : "Lambi (portrait) image use karo, jaise 1200 x 1600."}
+              ? "Only choose an image if you want to replace it; otherwise the old one stays."
+              : "Use a tall (portrait) image, e.g. 1200 x 1600."}
           </p>
         </div>
 
@@ -156,8 +156,8 @@ function CardSection({
           />
           <p className="mt-1 text-xs text-neutral-400">
             {editingId
-              ? "Link badal nahi sakte (models isi se jure hain)."
-              : "Ye link khud theek ho jata hai, isay aise hi rehne do."}
+              ? "The link can't be changed (models are attached to it)."
+              : "This link is fixed up automatically, so leave it as it is."}
           </p>
         </div>
 
@@ -208,7 +208,7 @@ function CardSection({
         ))}
         {cards.length === 0 && (
           <p className="text-sm text-neutral-500">
-            Abhi koi {cfg.noun.toLowerCase()} card nahi hai.
+            No {cfg.noun.toLowerCase()} cards yet.
           </p>
         )}
       </div>
@@ -238,7 +238,7 @@ function ModelSection({
   const [error, setError] = useState("");
 
   const slugs = cards.map((c) => slugOf(c.href));
-  // sirf 1 card ho to khud chun lo
+  // if there is only 1 card, select it automatically
   const category = values.category || (slugs.length === 1 ? slugs[0] : "");
   const labelOf = (slug: string) =>
     cards.find((c) => slugOf(c.href) === slug)?.label ?? slug;
@@ -282,13 +282,13 @@ function ModelSection({
       reset();
       onChange();
     } else {
-      setError((await res.json()).error ?? "Save nahi hua");
+      setError((await res.json()).error ?? "Failed to save");
     }
     setLoading(false);
   }
 
   async function remove(id: string) {
-    if (!confirm("Ye model delete karna hai?")) return;
+    if (!confirm("Do you want to delete this model?")) return;
     await fetch(`/api/admin/models/${id}`, { method: "DELETE" });
     if (editingId === id) reset();
     onChange();
@@ -299,7 +299,7 @@ function ModelSection({
       <section>
         <h2 className="mb-1 text-xl font-bold">2. {cfg.noun} models</h2>
         <p className="text-sm text-neutral-500">
-          Pehle upar {cfg.noun.toLowerCase()} card banao, phir yahan models add kar sakoge.
+          First create a {cfg.noun.toLowerCase()} card above, then you can add models here.
         </p>
       </section>
     );
@@ -312,7 +312,7 @@ function ModelSection({
 
       <form onSubmit={onSubmit} className="mb-5 space-y-3 border border-neutral-800 p-4">
         <p className="text-sm font-semibold text-brand">
-          {editingId ? "Model edit karo" : "Naya model add karo"}
+          {editingId ? "Edit model" : "Add new model"}
         </p>
 
         <select
@@ -322,7 +322,7 @@ function ModelSection({
           required
           className={input}
         >
-          <option value="">Card chuno</option>
+          <option value="">Select a card</option>
           {cards.map((c) => (
             <option key={c._id} value={slugOf(c.href)}>
               {c.label}
@@ -341,8 +341,8 @@ function ModelSection({
           />
           <p className="mt-1 text-xs text-neutral-400">
             {editingId
-              ? "Image badalni ho tabhi choose karo, warna purani rahegi."
-              : "Ye main image hai (list mein dikhegi)."}
+              ? "Only choose an image if you want to replace it; otherwise the old one stays."
+              : "This is the main image (shown in the list)."}
           </p>
         </div>
 
@@ -350,7 +350,7 @@ function ModelSection({
           name="name"
           value={values.name}
           onChange={change}
-          placeholder={`Model ka naam (e.g. ${cfg.nameExample})`}
+          placeholder={`Model name (e.g. ${cfg.nameExample})`}
           required
           className={input}
         />
@@ -362,7 +362,7 @@ function ModelSection({
             min="0"
             value={values.oldPrice}
             onChange={change}
-            placeholder="Purani price (kati hui)"
+            placeholder="Old price (crossed out)"
             className={input}
           />
           <input
@@ -371,7 +371,7 @@ function ModelSection({
             min="0"
             value={values.price}
             onChange={change}
-            placeholder="Asli price"
+            placeholder="Actual price"
             className={input}
           />
         </div>
@@ -432,7 +432,7 @@ function ModelSection({
         ))}
         {models.length === 0 && (
           <p className="text-sm text-neutral-500">
-            Abhi koi {cfg.noun.toLowerCase()} model nahi hai.
+            No {cfg.noun.toLowerCase()} models yet.
           </p>
         )}
       </div>

@@ -5,6 +5,8 @@ import { checkImage, uploadImage } from "@/lib/upload";
 import FanCardModel from "@/models/FanCard";
 
 const MAX_PER_GROUP = 3;
+// sections other than fans
+const OTHER_GROUPS = ["converter", "charger", "solar"];
 
 export async function GET() {
   await connectDB();
@@ -17,23 +19,23 @@ export async function POST(req: NextRequest) {
   const file = form.get("image") as File | null;
   const label = String(form.get("label") ?? "").trim();
   const raw = String(form.get("group") ?? "fan");
-  const group = raw === "converter" || raw === "charger" ? raw : "fan";
+  const group = OTHER_GROUPS.includes(raw) ? raw : "fan";
 
   if (!file || file.size === 0 || !label) {
-    return Response.json({ error: "Image aur label zaroori hain" }, { status: 400 });
+    return Response.json({ error: "Image and label are required" }, { status: 400 });
   }
   const bad = checkImage(file);
   if (bad) return Response.json({ error: bad }, { status: 400 });
 
   await connectDB();
 
-  // purane cards (group nahi likha) fan mein ginay jate hain
+  // older cards (with no group set) are counted as fan
   const inGroup = await FanCardModel.countDocuments(
-    group === "fan" ? { group: { $nin: ["converter", "charger"] } } : { group }
+    group === "fan" ? { group: { $nin: OTHER_GROUPS } } : { group }
   );
   if (inGroup >= MAX_PER_GROUP) {
     return Response.json(
-      { error: `Is section mein sirf ${MAX_PER_GROUP} cards ho sakte hain. Pehle koi delete karo.` },
+      { error: `This section can only have ${MAX_PER_GROUP} cards. Delete one first.` },
       { status: 400 }
     );
   }

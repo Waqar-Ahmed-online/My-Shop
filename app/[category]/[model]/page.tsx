@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import ModelView from "@/components/ModelView";
 import { getFanCards, getFanModel, getFanModels } from "@/lib/data";
 import LoaderScreen from "@/components/LoaderScreen";
+import RelatedProducts from "@/components/RelatedProducts";
 export async function generateStaticParams() {
   const models = await getFanModels();
   if (models.length === 0) return [{ category: "sk-fan-categories", model: "none" }];
@@ -31,7 +32,20 @@ async function Content({
         {" / "}
         <span className="text-neutral-900">{data.name}</span>
       </nav>
-      <ModelView model={data} category={{ label: card.label, href: card.href }} />
+                <ModelView
+        model={data}
+        category={{ label: card.label, href: card.href }}
+        group={card.group}
+      />
+
+      <Suspense fallback={null}>
+        <RelatedProducts
+          category={category}
+          currentId={data.id}
+          label={card.label}
+          group={card.group}
+        />
+      </Suspense>
     </div>
   );
 }

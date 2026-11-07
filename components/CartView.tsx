@@ -7,7 +7,9 @@ import { useCart } from "@/lib/cart";
 import { rs } from "@/lib/format";
 
 export default function CartView() {
-  const { items, total, setQty, remove } = useCart();
+  const { items, total, setQty, remove, ready } = useCart();
+
+  if (!ready) return null;
 
   if (items.length === 0) {
     return (
@@ -36,16 +38,17 @@ export default function CartView() {
             key={it.key}
             className="flex flex-wrap items-center gap-4 border border-neutral-200 bg-white p-3 shadow-sm"
           >
+            {/* image poora box bharti hai */}
             <Link
               href={it.href}
-              className="relative h-24 w-24 shrink-0 border border-neutral-200 bg-white"
+              className="relative h-24 w-24 shrink-0 overflow-hidden border border-neutral-200 bg-white"
             >
               <Image
                 src={it.image}
                 alt={it.name}
                 fill
                 sizes="96px"
-                className="object-contain p-2"
+                className="object-cover"
               />
             </Link>
 
@@ -98,6 +101,21 @@ export default function CartView() {
       <div className="mt-8 flex items-center justify-between border-t border-dashed border-neutral-300 pt-6">
         <p className="text-sm uppercase tracking-widest text-neutral-500">Total</p>
         <p className="text-2xl font-semibold text-gold-dark">{rs(total)}</p>
+      </div>
+
+      <div className="mt-6 flex flex-wrap justify-end gap-3">
+        <Link
+          href="/collection"
+          className="border border-neutral-900 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-900 transition hover:bg-neutral-900 hover:text-white"
+        >
+          Continue Shopping
+        </Link>
+        <Link
+          href="/checkout"
+          className="bg-brand px-8 py-3 text-xs font-semibold uppercase tracking-wider text-black transition hover:bg-neutral-900 hover:text-white"
+        >
+          Proceed to Checkout
+        </Link>
       </div>
     </div>
   );

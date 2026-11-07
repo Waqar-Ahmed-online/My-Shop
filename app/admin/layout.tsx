@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-// Naya section banana ho to bas yahan ek line add karo
+// To add a new section, just add one line here
 const links = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/slides", label: "Hero" },
@@ -11,6 +11,8 @@ const links = [
   { href: "/admin/models", label: "Fan Models" },
   { href: "/admin/converters", label: "Converters" },
   { href: "/admin/chargers", label: "Chargers" },
+  { href: "/admin/solar", label: "Solar" },
+  { href: "/admin/orders", label: "Orders" },
 ];
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -38,7 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      <nav className="grid grid-cols-2 gap-3 border-b border-neutral-800 p-6 md:grid-cols-6">
+      <nav className="grid grid-cols-2 gap-3 border-b border-neutral-800 p-6 md:grid-cols-4 lg:grid-cols-8">
         {links.map((l) => {
           const active = pathname === l.href;
           return (

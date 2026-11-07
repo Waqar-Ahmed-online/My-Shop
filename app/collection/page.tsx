@@ -9,7 +9,7 @@ export const metadata = { title: "All Collections | Abrar Store" };
 export default async function CollectionPage() {
   const cards = await getFanCards();
 
-  // har card ke kitne models hain
+  // number of models in each card
   const items = await Promise.all(
     cards.map(async (c) => {
       const slug = c.href.replace(/^\//, "");
@@ -37,7 +37,7 @@ export default async function CollectionPage() {
           </p>
 
           {items.length === 0 ? (
-            <p className="mt-12 text-center text-sm text-white">Abhi koi collection nahi hai.</p>
+            <p className="mt-12 text-center text-sm text-white">No collections yet.</p>
           ) : (
             <div className="mx-auto mt-10 grid max-w-md grid-cols-1 gap-6 sm:max-w-none sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
               {items.map((c) => (

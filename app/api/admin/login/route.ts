@@ -5,7 +5,7 @@ export async function POST(req: Request) {
   const { username, password } = await req.json();
 
   if (username !== process.env.ADMIN_USER || password !== process.env.ADMIN_PASS) {
-    return Response.json({ error: "Galat username ya password" }, { status: 401 });
+    return Response.json({ error: "Incorrect username or password" }, { status: 401 });
   }
 
   const store = await cookies();
